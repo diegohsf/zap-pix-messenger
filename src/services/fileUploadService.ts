@@ -68,13 +68,20 @@ export const uploadFile = async (
     throw new Error(`Tipo de arquivo não permitido para ${mediaType}: ${finalMimeType}`);
   }
 
-  console.log('✅ Arquivo de áudio aceito para upload');
+  console.log('✅ Arquivo aceito para upload');
 
-  // Validar tamanho do arquivo (50MB máximo)
-  const maxSize = 50 * 1024 * 1024; // 50MB
+  // Validar tamanho do arquivo - diferentes limites por tipo
+  let maxSize: number;
+  if (mediaType === 'video') {
+    maxSize = 100 * 1024 * 1024; // 100MB para vídeos
+  } else {
+    maxSize = 50 * 1024 * 1024; // 50MB para fotos e áudios
+  }
+
   if (fileToUpload.size > maxSize) {
+    const maxSizeMB = maxSize / (1024 * 1024);
     console.error('❌ ERRO: Arquivo muito grande:', fileToUpload.size, 'bytes');
-    throw new Error('Arquivo muito grande. Tamanho máximo: 50MB');
+    throw new Error(`Arquivo muito grande. Tamanho máximo para ${mediaType}: ${maxSizeMB}MB`);
   }
 
   // Gerar nome único para o arquivo
