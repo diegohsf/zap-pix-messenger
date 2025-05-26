@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,17 +10,20 @@ import { useToast } from '@/hooks/use-toast';
 
 interface MessageFormProps {
   onSubmit: (data: MessageData) => void;
+  isSubmitting?: boolean;
 }
 
 export interface MessageData {
   phoneNumber: string;
-  message: string;
+  messageText: string;
   mediaType: 'none' | 'photo' | 'audio' | 'video';
   mediaFile: File | null;
+  mediaFileUrl?: string;
+  mediaFileName?: string;
   price: number;
 }
 
-const MessageForm: React.FC<MessageFormProps> = ({ onSubmit }) => {
+const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = false }) => {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [message, setMessage] = useState('');
   const [mediaType, setMediaType] = useState<'none' | 'photo' | 'audio' | 'video'>('none');
@@ -147,7 +149,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit }) => {
 
     onSubmit({
       phoneNumber,
-      message,
+      messageText: message,
       mediaType,
       mediaFile,
       price: calculatePrice(),
@@ -196,6 +198,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit }) => {
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(formatPhoneNumber(e.target.value))}
                   className="pl-10 text-lg h-12"
+                  disabled={isSubmitting}
                 />
                 <Phone className="absolute left-3 top-3 h-6 w-6 text-gray-400" />
               </div>
@@ -209,6 +212,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit }) => {
                 onChange={(e) => setMessage(e.target.value)}
                 className="min-h-24 text-base"
                 maxLength={1000}
+                disabled={isSubmitting}
               />
               <div className="text-xs text-gray-500 text-right">
                 {message.length}/1000 caracteres
@@ -228,11 +232,13 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit }) => {
                     onChange={(e) => handleFileUpload(e, 'photo')}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     id="photo-upload"
+                    disabled={isSubmitting}
                   />
                   <Button
                     variant="outline"
                     className="w-full h-20 flex flex-col items-center justify-center gap-2 hover:bg-green-50 border-2 border-dashed"
                     type="button"
+                    disabled={isSubmitting}
                   >
                     <Image className="h-6 w-6" />
                     <span className="text-xs">Enviar Foto</span>
@@ -242,7 +248,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit }) => {
                 <Button
                   variant="outline"
                   onClick={startRecording}
-                  disabled={isRecording}
+                  disabled={isRecording || isSubmitting}
                   className="h-20 flex flex-col items-center justify-center gap-2 hover:bg-red-50 border-2 border-dashed"
                 >
                   <Mic className={`h-6 w-6 ${isRecording ? 'animate-pulse-slow text-red-500' : ''}`} />
@@ -258,11 +264,13 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit }) => {
                     onChange={(e) => handleFileUpload(e, 'video')}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     id="video-upload"
+                    disabled={isSubmitting}
                   />
                   <Button
                     variant="outline"
                     className="w-full h-20 flex flex-col items-center justify-center gap-2 hover:bg-blue-50 border-2 border-dashed"
                     type="button"
+                    disabled={isSubmitting}
                   >
                     <Video className="h-6 w-6" />
                     <span className="text-xs">Enviar Vídeo</span>
@@ -285,6 +293,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit }) => {
                     size="sm"
                     onClick={clearMedia}
                     className="text-red-600 hover:text-red-800"
+                    disabled={isSubmitting}
                   >
                     Remover
                   </Button>
@@ -309,16 +318,17 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit }) => {
 
             <Button
               onClick={handleSubmit}
+              disabled={isSubmitting}
               className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary-hover"
             >
-              💬 Enviar Mensagem
+              {isSubmitting ? 'Processando...' : '💬 Enviar Mensagem'}
             </Button>
 
             <div className="flex justify-center gap-4 text-sm">
-              <Button variant="link" className="text-blue-600">
+              <Button variant="link" className="text-blue-600" disabled={isSubmitting}>
                 📞 Enviar Áudio
               </Button>
-              <Button variant="link" className="text-purple-600">
+              <Button variant="link" className="text-purple-600" disabled={isSubmitting}>
                 📹 Enviar Foto/Vídeo
               </Button>
             </div>
