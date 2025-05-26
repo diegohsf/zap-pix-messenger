@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import ConfirmationPage from "./components/ConfirmationPage";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
+import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,6 +22,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/confirmacao/:transactionId" element={<ConfirmationPage />} />
+          <Route path="/admin" element={<Admin />} />
           <Route path="/privacidade" element={<PrivacyPolicy />} />
           <Route path="/termos" element={<TermsOfService />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
