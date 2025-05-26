@@ -18,8 +18,18 @@ export const useAudioRecorder = ({ onRecordingComplete, onError }: UseAudioRecor
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
+      // Try to use MP3 if supported, otherwise fall back to WebM
+      let mimeType = 'audio/webm;codecs=opus';
+      if (MediaRecorder.isTypeSupported('audio/mp4')) {
+        mimeType = 'audio/mp4';
+      } else if (MediaRecorder.isTypeSupported('audio/mpeg')) {
+        mimeType = 'audio/mpeg';
+      }
+      
+      console.log('Using MIME type:', mimeType);
+      
       const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus'
+        mimeType: mimeType
       });
       
       mediaRecorderRef.current = mediaRecorder;
@@ -33,7 +43,7 @@ export const useAudioRecorder = ({ onRecordingComplete, onError }: UseAudioRecor
       };
       
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm;codecs=opus' });
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         const duration = Math.floor((Date.now() - startTimeRef.current) / 1000);
         onRecordingComplete(audioBlob, duration);
         

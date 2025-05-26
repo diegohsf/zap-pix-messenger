@@ -121,12 +121,21 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     console.log('Duração:', duration, 'segundos');
     console.log('Tipo MIME do blob:', audioBlob.type);
     
-    // Garantir que o tipo MIME está correto
-    const mimeType = audioBlob.type || 'audio/webm';
-    console.log('Tipo MIME final:', mimeType);
+    // Criar um arquivo MP3 a partir do blob
+    const mimeType = audioBlob.type;
+    let fileName = `audio_${Date.now()}`;
+    let fileExtension = 'mp3';
     
-    // Criar um arquivo a partir do blob com o tipo MIME correto
-    const audioFile = new File([audioBlob], `audio_${Date.now()}.webm`, {
+    // Determinar extensão baseada no tipo MIME
+    if (mimeType.includes('webm')) {
+      fileExtension = 'webm';
+    } else if (mimeType.includes('mp4')) {
+      fileExtension = 'm4a';
+    } else if (mimeType.includes('mpeg')) {
+      fileExtension = 'mp3';
+    }
+    
+    const audioFile = new File([audioBlob], `${fileName}.${fileExtension}`, {
       type: mimeType,
     });
     

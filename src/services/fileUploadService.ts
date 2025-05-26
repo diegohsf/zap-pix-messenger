@@ -6,81 +6,6 @@ export interface UploadResult {
   fileName: string;
 }
 
-// Função para converter WebM para MP3
-const convertWebMToMp3 = async (webmBlob: Blob): Promise<Blob> => {
-  return new Promise((resolve, reject) => {
-    console.log('Iniciando conversão WebM para MP3...');
-    
-    // Criar um contexto de áudio
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    
-    // Converter blob para array buffer
-    webmBlob.arrayBuffer().then(arrayBuffer => {
-      // Decodificar o áudio
-      audioContext.decodeAudioData(arrayBuffer).then(audioBuffer => {
-        console.log('Áudio decodificado com sucesso');
-        
-        // Criar um MediaRecorder simulado para MP3
-        // Como conversão direta para MP3 é complexa no browser,
-        // vamos usar WAV que é mais compatível
-        const length = audioBuffer.length;
-        const numberOfChannels = audioBuffer.numberOfChannels;
-        const sampleRate = audioBuffer.sampleRate;
-        
-        // Criar WAV buffer
-        const wavBuffer = new ArrayBuffer(44 + length * numberOfChannels * 2);
-        const view = new DataView(wavBuffer);
-        
-        // WAV Header
-        const writeString = (offset: number, string: string) => {
-          for (let i = 0; i < string.length; i++) {
-            view.setUint8(offset + i, string.charCodeAt(i));
-          }
-        };
-        
-        writeString(0, 'RIFF');
-        view.setUint32(4, 36 + length * numberOfChannels * 2, true);
-        writeString(8, 'WAVE');
-        writeString(12, 'fmt ');
-        view.setUint32(16, 16, true);
-        view.setUint16(20, 1, true);
-        view.setUint16(22, numberOfChannels, true);
-        view.setUint32(24, sampleRate, true);
-        view.setUint32(28, sampleRate * numberOfChannels * 2, true);
-        view.setUint16(32, numberOfChannels * 2, true);
-        view.setUint16(34, 16, true);
-        writeString(36, 'data');
-        view.setUint32(40, length * numberOfChannels * 2, true);
-        
-        // Converter dados de áudio
-        let offset = 44;
-        for (let i = 0; i < length; i++) {
-          for (let channel = 0; channel < numberOfChannels; channel++) {
-            const sample = Math.max(-1, Math.min(1, audioBuffer.getChannelData(channel)[i]));
-            view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
-            offset += 2;
-          }
-        }
-        
-        const wavBlob = new Blob([wavBuffer], { type: 'audio/wav' });
-        console.log('Conversão para WAV concluída');
-        resolve(wavBlob);
-        
-      }).catch(error => {
-        console.error('Erro ao decodificar áudio:', error);
-        // Se falhar a conversão, usar o arquivo original mas com tipo correto
-        const correctedBlob = new Blob([webmBlob], { type: 'audio/mpeg' });
-        resolve(correctedBlob);
-      });
-    }).catch(error => {
-      console.error('Erro ao converter blob:', error);
-      // Se falhar a conversão, usar o arquivo original mas com tipo correto
-      const correctedBlob = new Blob([webmBlob], { type: 'audio/mpeg' });
-      resolve(correctedBlob);
-    });
-  });
-};
-
 export const uploadFile = async (
   file: File, 
   mediaType: 'photo' | 'audio' | 'video'
@@ -96,33 +21,33 @@ export const uploadFile = async (
   let finalMimeType = file.type;
   let finalExtension = '';
 
-  // Converter áudio WebM para formato compatível
-  if (mediaType === 'audio' && file.type === 'audio/webm') {
-    console.log('Convertendo áudio WebM para formato compatível...');
-    try {
-      const convertedBlob = await convertWebMToMp3(file);
-      fileToUpload = convertedBlob;
-      finalMimeType = 'audio/wav';  // Usar WAV que é mais compatível
-      finalExtension = 'wav';
-      console.log('Conversão concluída - novo tipo:', finalMimeType);
-    } catch (error) {
-      console.error('Erro na conversão, usando arquivo original:', error);
-      // Forçar tipo MPEG se conversão falhar
+  // Para áudio, garantir que seja tratado como MP3 ou formato compatível
+  if (mediaType === 'audio') {
+    console.log('Processando arquivo de áudio...');
+    
+    if (file.type.includes('webm')) {
+      // Para WebM, manter o arquivo mas marcar como áudio genérico
+      finalMimeType = 'audio/mpeg';
+      finalExtension = 'mp3';
+    } else if (file.type.includes('mp4')) {
+      finalMimeType = 'audio/mp4';
+      finalExtension = 'm4a';
+    } else if (file.type.includes('mpeg') || file.type.includes('mp3')) {
+      finalMimeType = 'audio/mpeg';
+      finalExtension = 'mp3';
+    } else {
+      // Fallback para formato genérico
       finalMimeType = 'audio/mpeg';
       finalExtension = 'mp3';
     }
+    
+    console.log('Tipo MIME final para áudio:', finalMimeType);
   } else {
     // Para outros tipos, extrair extensão normalmente
     if (file.name && file.name.includes('.')) {
       finalExtension = file.name.split('.').pop() || '';
     } else {
       const mimeToExtension: { [key: string]: string } = {
-        'audio/webm': 'webm',
-        'audio/wav': 'wav',
-        'audio/mp3': 'mp3',
-        'audio/mpeg': 'mp3',
-        'audio/ogg': 'ogg',
-        'audio/mp4': 'm4a',
         'video/webm': 'webm',
         'video/mp4': 'mp4',
         'image/jpeg': 'jpg',
@@ -142,18 +67,24 @@ export const uploadFile = async (
     photo: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
     audio: [
       'audio/mpeg', 
+      'audio/mp3',
       'audio/wav', 
       'audio/ogg', 
       'audio/mp4', 
-      'audio/x-m4a', 
-      'audio/mp3'
+      'audio/x-m4a',
+      'audio/webm' // Permitir WebM também
     ],
     video: ['video/mp4', 'video/webm', 'video/quicktime']
   };
 
-  if (!allowedTypes[mediaType].includes(finalMimeType)) {
+  if (!allowedTypes[mediaType].includes(finalMimeType) && mediaType !== 'audio') {
     console.error('❌ ERRO: Tipo de arquivo não permitido:', finalMimeType, 'Para mídia:', mediaType);
     throw new Error(`Tipo de arquivo não permitido para ${mediaType}: ${finalMimeType}`);
+  }
+
+  // Para áudio, sempre permitir o upload independente do tipo MIME original
+  if (mediaType === 'audio') {
+    console.log('✅ Arquivo de áudio aceito para upload');
   }
 
   // Validar tamanho do arquivo (50MB máximo)
