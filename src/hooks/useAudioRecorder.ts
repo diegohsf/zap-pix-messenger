@@ -18,12 +18,15 @@ export const useAudioRecorder = ({ onRecordingComplete, onError }: UseAudioRecor
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
-      // Try to use MP3 if supported, otherwise fall back to WebM
+      // Usar WebM como formato padrão pois é suportado pelo Supabase
       let mimeType = 'audio/webm;codecs=opus';
-      if (MediaRecorder.isTypeSupported('audio/mp4')) {
-        mimeType = 'audio/mp4';
-      } else if (MediaRecorder.isTypeSupported('audio/mpeg')) {
-        mimeType = 'audio/mpeg';
+      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        mimeType = 'audio/webm;codecs=opus';
+      } else if (MediaRecorder.isTypeSupported('audio/webm')) {
+        mimeType = 'audio/webm';
+      } else {
+        // Fallback se WebM não for suportado
+        mimeType = 'audio/wav';
       }
       
       console.log('Using MIME type:', mimeType);

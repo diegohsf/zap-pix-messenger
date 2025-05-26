@@ -21,24 +21,24 @@ export const uploadFile = async (
   let finalMimeType = file.type;
   let finalExtension = '';
 
-  // Para áudio, garantir que seja tratado como MP3 ou formato compatível
+  // Para áudio, garantir que seja em formato suportado pelo Supabase
   if (mediaType === 'audio') {
     console.log('Processando arquivo de áudio...');
     
     if (file.type.includes('webm')) {
-      // Para WebM, manter o arquivo mas marcar como áudio genérico
-      finalMimeType = 'audio/mpeg';
-      finalExtension = 'mp3';
-    } else if (file.type.includes('mp4')) {
-      finalMimeType = 'audio/mp4';
-      finalExtension = 'm4a';
-    } else if (file.type.includes('mpeg') || file.type.includes('mp3')) {
-      finalMimeType = 'audio/mpeg';
-      finalExtension = 'mp3';
+      // WebM é suportado pelo Supabase
+      finalMimeType = 'audio/webm';
+      finalExtension = 'webm';
+    } else if (file.type.includes('wav')) {
+      finalMimeType = 'audio/wav';
+      finalExtension = 'wav';
+    } else if (file.type.includes('ogg')) {
+      finalMimeType = 'audio/ogg';
+      finalExtension = 'ogg';
     } else {
-      // Fallback para formato genérico
-      finalMimeType = 'audio/mpeg';
-      finalExtension = 'mp3';
+      // Fallback para WebM se o tipo não for reconhecido
+      finalMimeType = 'audio/webm';
+      finalExtension = 'webm';
     }
     
     console.log('Tipo MIME final para áudio:', finalMimeType);
@@ -66,26 +66,19 @@ export const uploadFile = async (
   const allowedTypes = {
     photo: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
     audio: [
-      'audio/mpeg', 
-      'audio/mp3',
+      'audio/webm',
       'audio/wav', 
-      'audio/ogg', 
-      'audio/mp4', 
-      'audio/x-m4a',
-      'audio/webm' // Permitir WebM também
+      'audio/ogg'
     ],
     video: ['video/mp4', 'video/webm', 'video/quicktime']
   };
 
-  if (!allowedTypes[mediaType].includes(finalMimeType) && mediaType !== 'audio') {
+  if (!allowedTypes[mediaType].includes(finalMimeType)) {
     console.error('❌ ERRO: Tipo de arquivo não permitido:', finalMimeType, 'Para mídia:', mediaType);
     throw new Error(`Tipo de arquivo não permitido para ${mediaType}: ${finalMimeType}`);
   }
 
-  // Para áudio, sempre permitir o upload independente do tipo MIME original
-  if (mediaType === 'audio') {
-    console.log('✅ Arquivo de áudio aceito para upload');
-  }
+  console.log('✅ Arquivo de áudio aceito para upload');
 
   // Validar tamanho do arquivo (50MB máximo)
   const maxSize = 50 * 1024 * 1024; // 50MB
