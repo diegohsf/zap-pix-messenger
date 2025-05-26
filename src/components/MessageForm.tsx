@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, Video, Image, Phone, MessageSquare } from 'lucide-react';
+import { Upload, Video, Image, Phone, MessageSquare, Mic } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AudioRecorder from './AudioRecorder';
 
