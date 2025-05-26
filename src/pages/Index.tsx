@@ -1,13 +1,59 @@
-// Update this page (the content is just a fallback if you fail to update the page)
 
-const Index = () => {
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import MessageForm, { MessageData } from '@/components/MessageForm';
+import PaymentModal from '@/components/PaymentModal';
+
+const Index: React.FC = () => {
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [currentMessageData, setCurrentMessageData] = useState<MessageData | null>(null);
+  const navigate = useNavigate();
+
+  const handleFormSubmit = (data: MessageData) => {
+    console.log('Dados do formulário:', data);
+    
+    // Simula salvamento no banco de dados
+    const savedData = {
+      id: Date.now(),
+      ...data,
+      createdAt: new Date().toISOString(),
+      status: 'pending_payment'
+    };
+    
+    console.log('Dados salvos no "banco":', savedData);
+    
+    // Abre o modal de pagamento
+    setCurrentMessageData(data);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentConfirmed = (transactionId: string) => {
+    console.log('Pagamento confirmado:', transactionId);
+    
+    // Atualiza o status no "banco de dados"
+    const updatedData = {
+      ...currentMessageData,
+      transactionId,
+      status: 'paid',
+      paidAt: new Date().toISOString()
+    };
+    
+    console.log('Dados atualizados após pagamento:', updatedData);
+    
+    // Redireciona para a página de confirmação
+    setShowPaymentModal(false);
+    navigate(`/confirmacao/${transactionId}`);
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <>
+      <MessageForm onSubmit={handleFormSubmit} />
+      <PaymentModal
+        isOpen={showPaymentModal}
+        messageData={currentMessageData}
+        onPaymentConfirmed={handlePaymentConfirmed}
+      />
+    </>
   );
 };
 
