@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Copy, CheckCircle, Clock, Smartphone, AlertCircle, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { MessageData } from './MessageForm';
-import { updateMessagePayment } from '@/services/messageService';
+import { updateMessagePayment, getMessageById } from '@/services/messageService';
 import { supabase } from '@/integrations/supabase/client';
 
 interface PaymentModalProps {
@@ -55,6 +56,40 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     }
   }, [isOpen, messageData, messageId]);
 
+  // Verificar status do pagamento periodicamente
+  useEffect(() => {
+    if (!messageId || !isOpen) return;
+
+    const checkPaymentStatus = async () => {
+      try {
+        console.log('Checking payment status for message:', messageId);
+        const message = await getMessageById(messageId);
+        
+        if (message && message.status === 'paid' && message.transaction_id) {
+          console.log('Payment confirmed, redirecting...', message.transaction_id);
+          
+          toast({
+            title: "Pagamento confirmado!",
+            description: "Redirecionando para a página de confirmação...",
+          });
+
+          // Redirecionar após confirmação do pagamento
+          setTimeout(() => {
+            onPaymentConfirmed(message.transaction_id!);
+          }, 1000);
+        }
+      } catch (error) {
+        console.error('Error checking payment status:', error);
+      }
+    };
+
+    // Verificar imediatamente e depois a cada 5 segundos
+    checkPaymentStatus();
+    const statusInterval = setInterval(checkPaymentStatus, 5000);
+
+    return () => clearInterval(statusInterval);
+  }, [messageId, isOpen, onPaymentConfirmed, toast]);
+
   const generatePixCharge = async () => {
     if (!messageData || !messageId) return;
 
@@ -69,7 +104,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           messageId,
           phoneNumber: messageData.phoneNumber,
           amount: messageData.price,
-          description: `Zap Elegante - ${messageData.mediaType === 'none' ? 'Mensagem de texto' : 'Mensagem com mídia'}`
+          description: `Zap Elegante - ${messageData.mediaType === 'none' ? 'Mensagem de texto' : `Mensagem com ${messageData.mediaType}`}`
         }
       });
 
@@ -109,9 +144,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       setIsLoadingPix(false);
     }
   };
-
-  // Remover a simulação de pagamento automática - agora só redireciona com webhook real
-  // O pagamento será confirmado via webhook do OpenPix quando realmente for pago
 
   const copyPixCode = () => {
     navigator.clipboard.writeText(pixCode);
@@ -315,3 +347,4 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 };
 
 export default PaymentModal;
+
