@@ -41,6 +41,7 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
   const audioRef = useRef<HTMLAudioElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const originalBufferRef = useRef<AudioBuffer | null>(null);
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const url = URL.createObjectURL(audioBlob);
@@ -52,6 +53,26 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
     };
   }, [audioBlob]);
 
+  // Auto-aplicar modulação quando as configurações mudarem
+  useEffect(() => {
+    if (originalBufferRef.current) {
+      // Debounce para evitar muitas chamadas seguidas
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+      
+      debounceTimeoutRef.current = setTimeout(() => {
+        applyVoiceModulation();
+      }, 500); // 500ms de delay
+    }
+
+    return () => {
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+    };
+  }, [settings]);
+
   const loadAudioBuffer = async () => {
     try {
       if (!audioContextRef.current) {
@@ -61,6 +82,9 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
       const arrayBuffer = await audioBlob.arrayBuffer();
       const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
       originalBufferRef.current = audioBuffer;
+      
+      // Aplicar modulação inicial
+      setTimeout(() => applyVoiceModulation(), 100);
     } catch (error) {
       console.error('Erro ao carregar buffer de áudio:', error);
     }
@@ -78,67 +102,108 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
       const audioContext = audioContextRef.current;
       const originalBuffer = originalBufferRef.current;
       
-      // Criar um novo buffer para o áudio modificado
+      // Criar um offline audio context para processamento mais eficiente
       const sampleRate = originalBuffer.sampleRate;
       const numberOfChannels = originalBuffer.numberOfChannels;
       
       // Calcular nova duração baseada na velocidade
-      const newLength = Math.floor(originalBuffer.length / settings.speedChange);
-      const modifiedBuffer = audioContext.createBuffer(numberOfChannels, newLength, sampleRate);
+      const speedMultiplier = 1 / settings.speedChange;
+      const newLength = Math.floor(originalBuffer.length * speedMultiplier);
+      
+      const offlineContext = new OfflineAudioContext(numberOfChannels, newLength, sampleRate);
+      const source = offlineContext.createBufferSource();
+      source.buffer = originalBuffer;
 
-      for (let channel = 0; channel < numberOfChannels; channel++) {
-        const originalData = originalBuffer.getChannelData(channel);
-        const modifiedData = modifiedBuffer.getChannelData(channel);
+      // Aplicar mudança de velocidade
+      source.playbackRate.value = settings.speedChange;
 
-        // Aplicar mudança de velocidade/pitch
-        for (let i = 0; i < newLength; i++) {
-          const sourceIndex = Math.floor(i * settings.speedChange);
-          if (sourceIndex < originalData.length) {
-            modifiedData[i] = originalData[sourceIndex];
-          }
+      let audioNode: AudioNode = source;
+
+      // Aplicar efeitos baseados no tipo de voz
+      if (settings.voiceType === 'robotic') {
+        // Efeito robótico com wave shaper
+        const waveShaperNode = offlineContext.createWaveShaper();
+        const curve = new Float32Array(65536);
+        for (let i = 0; i < 65536; i++) {
+          const x = (i - 32768) / 32768;
+          curve[i] = Math.sign(x) * Math.pow(Math.abs(x), 0.5) * 0.8;
         }
-
-        // Aplicar modulação de pitch baseada no tipo de voz
-        let pitchMultiplier = 1;
-        switch (settings.voiceType) {
-          case 'female':
-            pitchMultiplier = 1.3;
-            break;
-          case 'male':
-            pitchMultiplier = 0.8;
-            break;
-          case 'chipmunk':
-            pitchMultiplier = 1.8;
-            break;
-          case 'deep':
-            pitchMultiplier = 0.6;
-            break;
-          case 'robotic':
-            pitchMultiplier = 1.0;
-            break;
-        }
-
-        // Aplicar pitch shift manual
-        pitchMultiplier *= (1 + settings.pitchShift / 100);
-
-        // Aplicar efeitos específicos
-        if (settings.voiceType === 'robotic') {
-          // Efeito robótico: quantização
-          for (let i = 0; i < modifiedData.length; i++) {
-            modifiedData[i] = Math.round(modifiedData[i] * 8) / 8;
-          }
-        }
-
-        // Adicionar ruído se necessário
-        if (settings.addNoise) {
-          for (let i = 0; i < modifiedData.length; i++) {
-            modifiedData[i] += (Math.random() - 0.5) * 0.02;
-          }
-        }
+        waveShaperNode.curve = curve;
+        waveShaperNode.oversample = '4x';
+        
+        audioNode.connect(waveShaperNode);
+        audioNode = waveShaperNode;
       }
 
-      // Converter buffer modificado de volta para blob
-      const modifiedBlob = await bufferToWavBlob(modifiedBuffer);
+      // Aplicar filtro de frequência baseado no tipo de voz
+      const filter = offlineContext.createBiquadFilter();
+      
+      switch (settings.voiceType) {
+        case 'female':
+          filter.type = 'highpass';
+          filter.frequency.value = 200;
+          filter.Q.value = 1;
+          break;
+        case 'male':
+          filter.type = 'lowpass';
+          filter.frequency.value = 3000;
+          filter.Q.value = 1;
+          break;
+        case 'chipmunk':
+          filter.type = 'highpass';
+          filter.frequency.value = 400;
+          filter.Q.value = 2;
+          break;
+        case 'deep':
+          filter.type = 'lowpass';
+          filter.frequency.value = 1500;
+          filter.Q.value = 2;
+          break;
+        default:
+          filter.type = 'allpass';
+          break;
+      }
+
+      audioNode.connect(filter);
+      audioNode = filter;
+
+      // Aplicar pitch shift se necessário
+      if (settings.pitchShift !== 0) {
+        const gainNode = offlineContext.createGain();
+        gainNode.gain.value = 1 + (settings.pitchShift / 200); // Simular pitch shift com gain
+        audioNode.connect(gainNode);
+        audioNode = gainNode;
+      }
+
+      // Adicionar ruído se solicitado
+      if (settings.addNoise) {
+        const noiseBuffer = offlineContext.createBuffer(numberOfChannels, newLength, sampleRate);
+        for (let channel = 0; channel < numberOfChannels; channel++) {
+          const channelData = noiseBuffer.getChannelData(channel);
+          for (let i = 0; i < newLength; i++) {
+            channelData[i] = (Math.random() - 0.5) * 0.02;
+          }
+        }
+        
+        const noiseSource = offlineContext.createBufferSource();
+        noiseSource.buffer = noiseBuffer;
+        const noiseGain = offlineContext.createGain();
+        noiseGain.gain.value = 0.05;
+        
+        noiseSource.connect(noiseGain);
+        noiseGain.connect(offlineContext.destination);
+        noiseSource.start(0);
+      }
+
+      // Conectar ao destino
+      audioNode.connect(offlineContext.destination);
+      source.start(0);
+
+      // Renderizar áudio
+      const renderedBuffer = await offlineContext.startRendering();
+      
+      // Converter buffer para blob
+      const modifiedBlob = await bufferToWavBlob(renderedBuffer);
       onModulatedAudio(modifiedBlob);
 
     } catch (error) {
@@ -174,7 +239,7 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
     view.setUint32(4, bufferSize - 8, true);
     writeString(8, 'WAVE');
     writeString(12, 'fmt ');
-    view.setUint32(16, 16, true); // PCM chunk size
+    view.setUint32(16, 16, true);
     view.setUint16(20, format, true);
     view.setUint16(22, numberOfChannels, true);
     view.setUint32(24, sampleRate, true);
@@ -232,9 +297,14 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
         <CardTitle className="text-lg flex items-center gap-2">
           <Mic className="h-5 w-5 text-orange-600" />
           Modulação de Voz (Opcional)
+          {isProcessing && (
+            <span className="text-sm text-orange-600 animate-pulse">
+              Processando...
+            </span>
+          )}
         </CardTitle>
         <p className="text-sm text-orange-700">
-          Modifique sua voz para maior anonimato
+          Modifique sua voz automaticamente para maior anonimato
         </p>
       </CardHeader>
 
@@ -255,7 +325,16 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={togglePlayPause}
+            onClick={() => {
+              const audio = audioRef.current;
+              if (!audio) return;
+              if (isPlaying) {
+                audio.pause();
+              } else {
+                audio.play();
+              }
+              setIsPlaying(!isPlaying);
+            }}
             className="h-8 w-8 p-0"
           >
             {isPlaying ? (
@@ -268,7 +347,14 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={restart}
+            onClick={() => {
+              const audio = audioRef.current;
+              if (!audio) return;
+              audio.currentTime = 0;
+              setCurrentTime(0);
+              setIsPlaying(false);
+              audio.pause();
+            }}
             className="h-8 w-8 p-0"
           >
             <RotateCcw className="h-4 w-4" />
@@ -276,7 +362,10 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
 
           <div className="flex-1 text-xs text-gray-700">
             <div className="font-mono">
-              {formatTime(currentTime)} / {formatTime(duration)}
+              {Math.floor(currentTime / 60).toString().padStart(2, '0')}:
+              {Math.floor(currentTime % 60).toString().padStart(2, '0')} / 
+              {Math.floor(duration / 60).toString().padStart(2, '0')}:
+              {Math.floor(duration % 60).toString().padStart(2, '0')}
             </div>
             <div className="w-full bg-gray-200 rounded-full h-1 mt-1">
               <div
@@ -369,17 +458,8 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
           />
         </div>
 
-        {/* Apply Button */}
-        <Button
-          onClick={applyVoiceModulation}
-          disabled={isProcessing}
-          className="w-full bg-orange-600 hover:bg-orange-700"
-        >
-          {isProcessing ? 'Processando...' : 'Aplicar Modulação'}
-        </Button>
-
         <p className="text-xs text-orange-600 text-center">
-          💡 A modulação ajuda a proteger sua identidade
+          💡 A modulação é aplicada automaticamente quando você altera as configurações
         </p>
       </CardContent>
     </Card>
