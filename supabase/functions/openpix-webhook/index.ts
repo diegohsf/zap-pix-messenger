@@ -7,6 +7,25 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Função para formatar o número de telefone para o formato correto
+const formatPhoneNumber = (phoneNumber: string): string => {
+  // Remove todos os caracteres que não são números
+  const numbersOnly = phoneNumber.replace(/\D/g, '');
+  
+  // Se já tem código do país (55), retorna como está
+  if (numbersOnly.startsWith('55') && numbersOnly.length >= 12) {
+    return numbersOnly;
+  }
+  
+  // Se não tem código do país, adiciona o 55
+  if (numbersOnly.length >= 10) {
+    return `55${numbersOnly}`;
+  }
+  
+  // Se não conseguir formatar, retorna o original
+  return phoneNumber;
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -91,6 +110,10 @@ serve(async (req) => {
 
       console.log('Message status updated successfully:', updatedMessage)
 
+      // Formatar o número de telefone para o formato correto
+      const formattedPhoneNumber = formatPhoneNumber(updatedMessage.phone_number);
+      console.log('Número original:', updatedMessage.phone_number, '-> Número formatado:', formattedPhoneNumber);
+
       // Send data to N8N webhook
       const n8nWebhookUrl = 'https://webhook.golawtech.com.br/webhook/9d0cf2ea-019d-4e28-b147-f542b27a6cc9'
       
@@ -103,7 +126,7 @@ serve(async (req) => {
           },
           body: JSON.stringify({
             messageId: updatedMessage.id,
-            phoneNumber: updatedMessage.phone_number,
+            phoneNumber: formattedPhoneNumber, // Usando o número formatado
             messageText: updatedMessage.message_text,
             mediaType: updatedMessage.media_type,
             mediaFileUrl: updatedMessage.media_file_url,
