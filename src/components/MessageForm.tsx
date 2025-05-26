@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -5,8 +6,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, Mic, Video, Image, Phone, MessageSquare } from 'lucide-react';
+import { Upload, Video, Image, Phone, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import AudioRecorder from './AudioRecorder';
 
 interface MessageFormProps {
   onSubmit: (data: MessageData) => void;
@@ -29,6 +31,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
   const [mediaType, setMediaType] = useState<'none' | 'photo' | 'audio' | 'video'>('none');
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [isRecording, setIsRecording] = useState(false);
+  const [recordedAudio, setRecordedAudio] = useState<{ blob: Blob; duration: number } | null>(null);
   const { toast } = useToast();
 
   const formatPhoneNumber = (value: string) => {
@@ -90,8 +93,11 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, type: 'photo' | 'video') => {
     const file = event.target.files?.[0];
     if (file) {
+      console.log(`Arquivo ${type} selecionado:`, file.name, 'Tamanho:', file.size);
       setMediaFile(file);
       setMediaType(type);
+      // Limpar áudio gravado se houver
+      setRecordedAudio(null);
       toast({
         title: "Arquivo selecionado",
         description: `${type === 'photo' ? 'Foto' : 'Vídeo'} carregado com sucesso!`,
@@ -99,36 +105,51 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     }
   };
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      setIsRecording(true);
-      
-      // Simulação de gravação por 3 segundos
-      setTimeout(() => {
-        setIsRecording(false);
-        setMediaType('audio');
-        stream.getTracks().forEach(track => track.stop());
-        toast({
-          title: "Áudio gravado",
-          description: "Gravação de áudio concluída!",
-        });
-      }, 3000);
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível acessar o microfone.",
-        variant: "destructive",
-      });
+  const handleAudioRecorded = (audioBlob: Blob, duration: number) => {
+    console.log('Áudio gravado:', audioBlob.size, 'bytes, duração:', duration, 'segundos');
+    
+    // Criar um arquivo a partir do blob
+    const audioFile = new File([audioBlob], `audio_${Date.now()}.webm`, {
+      type: 'audio/webm',
+    });
+    
+    setRecordedAudio({ blob: audioBlob, duration });
+    setMediaFile(audioFile);
+    setMediaType('audio');
+    setIsRecording(false);
+    
+    toast({
+      title: "Áudio gravado",
+      description: `Gravação de ${duration} segundos concluída!`,
+    });
+  };
+
+  const handleCancelAudio = () => {
+    console.log('Gravação de áudio cancelada');
+    setIsRecording(false);
+    setRecordedAudio(null);
+    setMediaFile(null);
+    if (mediaType === 'audio') {
+      setMediaType('none');
     }
   };
 
   const clearMedia = () => {
+    console.log('Limpando mídia selecionada');
     setMediaType('none');
     setMediaFile(null);
+    setRecordedAudio(null);
+    setIsRecording(false);
   };
 
   const handleSubmit = () => {
+    console.log('=== INICIANDO VALIDAÇÃO DO FORMULÁRIO ===');
+    console.log('Número:', phoneNumber);
+    console.log('Mensagem:', message);
+    console.log('Tipo de mídia:', mediaType);
+    console.log('Arquivo de mídia:', mediaFile);
+    console.log('Áudio gravado:', recordedAudio);
+
     if (!validatePhoneNumber(phoneNumber)) {
       toast({
         title: "Número inválido",
@@ -147,13 +168,19 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
       return;
     }
 
-    onSubmit({
+    const formData: MessageData = {
       phoneNumber,
       messageText: message,
       mediaType,
       mediaFile,
       price: calculatePrice(),
-    });
+    };
+
+    console.log('=== DADOS FINAIS DO FORMULÁRIO ===');
+    console.log('Dados que serão enviados:', formData);
+    console.log('==========================================');
+
+    onSubmit(formData);
   };
 
   return (
@@ -232,30 +259,26 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                     onChange={(e) => handleFileUpload(e, 'photo')}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     id="photo-upload"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isRecording}
                   />
                   <Button
                     variant="outline"
                     className="w-full h-20 flex flex-col items-center justify-center gap-2 hover:bg-green-50 border-2 border-dashed"
                     type="button"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isRecording}
                   >
                     <Image className="h-6 w-6" />
                     <span className="text-xs">Enviar Foto</span>
                   </Button>
                 </div>
 
-                <Button
-                  variant="outline"
-                  onClick={startRecording}
-                  disabled={isRecording || isSubmitting}
-                  className="h-20 flex flex-col items-center justify-center gap-2 hover:bg-red-50 border-2 border-dashed"
-                >
-                  <Mic className={`h-6 w-6 ${isRecording ? 'animate-pulse-slow text-red-500' : ''}`} />
-                  <span className="text-xs">
-                    {isRecording ? 'Gravando...' : 'Gravar Áudio'}
-                  </span>
-                </Button>
+                <AudioRecorder
+                  onAudioRecorded={handleAudioRecorded}
+                  onCancel={handleCancelAudio}
+                  isRecording={isRecording}
+                  onStartRecording={() => setIsRecording(true)}
+                  onStopRecording={() => setIsRecording(false)}
+                />
 
                 <div className="relative">
                   <input
@@ -264,13 +287,13 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                     onChange={(e) => handleFileUpload(e, 'video')}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     id="video-upload"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isRecording}
                   />
                   <Button
                     variant="outline"
                     className="w-full h-20 flex flex-col items-center justify-center gap-2 hover:bg-blue-50 border-2 border-dashed"
                     type="button"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || isRecording}
                   >
                     <Video className="h-6 w-6" />
                     <span className="text-xs">Enviar Vídeo</span>
@@ -282,11 +305,27 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                 <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                   <div className="flex items-center gap-2">
                     {mediaType === 'photo' && <Image className="h-5 w-5 text-green-600" />}
-                    {mediaType === 'audio' && <Mic className="h-5 w-5 text-green-600" />}
+                    {mediaType === 'audio' && (
+                      <div className="flex items-center gap-2">
+                        <Mic className="h-5 w-5 text-green-600" />
+                        {recordedAudio && (
+                          <span className="text-xs text-green-700">
+                            ({Math.floor(recordedAudio.duration / 60)}:{(recordedAudio.duration % 60).toString().padStart(2, '0')})
+                          </span>
+                        )}
+                      </div>
+                    )}
                     {mediaType === 'video' && <Video className="h-5 w-5 text-green-600" />}
                     <span className="text-sm text-green-800 capitalize">
-                      {mediaType === 'photo' ? 'Foto' : mediaType === 'audio' ? 'Áudio' : 'Vídeo'} selecionado
+                      {mediaType === 'photo' ? 'Foto' : 
+                       mediaType === 'audio' ? 'Áudio' : 
+                       'Vídeo'} selecionado
                     </span>
+                    {mediaFile && (
+                      <span className="text-xs text-green-600">
+                        ({(mediaFile.size / 1024 / 1024).toFixed(1)} MB)
+                      </span>
+                    )}
                   </div>
                   <Button
                     variant="ghost"
@@ -318,10 +357,12 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
 
             <Button
               onClick={handleSubmit}
-              disabled={isSubmitting}
+              disabled={isSubmitting || isRecording}
               className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary-hover"
             >
-              {isSubmitting ? 'Processando...' : '💬 Enviar Mensagem'}
+              {isSubmitting ? 'Processando...' : 
+               isRecording ? 'Finalize a gravação primeiro' : 
+               '💬 Enviar Mensagem'}
             </Button>
 
             <div className="flex justify-center gap-4 text-sm">
