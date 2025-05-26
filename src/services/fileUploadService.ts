@@ -15,7 +15,7 @@ export const uploadFile = async (
   // Validar tipo de arquivo
   const allowedTypes = {
     photo: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-    audio: ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/webm', 'audio/mp4', 'audio/x-m4a'],
+    audio: ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4', 'audio/x-m4a', 'audio/webm', 'audio/mp3'],
     video: ['video/mp4', 'video/webm', 'video/quicktime']
   };
 
@@ -30,10 +30,16 @@ export const uploadFile = async (
     throw new Error('Arquivo muito grande. Tamanho máximo: 50MB');
   }
 
+  // Para arquivos de áudio webm, vamos renomear a extensão para .webm
+  // mas manter o tipo MIME como audio/webm
+  let fileExtension = file.name.split('.').pop();
+  if (file.type === 'audio/webm' && !fileExtension) {
+    fileExtension = 'webm';
+  }
+
   // Gerar nome único para o arquivo
   const timestamp = Date.now();
   const randomId = Math.random().toString(36).substring(2);
-  const fileExtension = file.name.split('.').pop();
   const fileName = `${mediaType}/${timestamp}_${randomId}.${fileExtension}`;
 
   console.log('Nome do arquivo gerado:', fileName);
@@ -43,7 +49,8 @@ export const uploadFile = async (
     .from('message-media')
     .upload(fileName, file, {
       cacheControl: '3600',
-      upsert: false
+      upsert: false,
+      contentType: file.type
     });
 
   if (error) {

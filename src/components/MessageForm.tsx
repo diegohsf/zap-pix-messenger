@@ -108,10 +108,12 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
   const handleAudioRecorded = (audioBlob: Blob, duration: number) => {
     console.log('Áudio gravado:', audioBlob.size, 'bytes, duração:', duration, 'segundos');
     
-    // Criar um arquivo a partir do blob
+    // Criar um arquivo a partir do blob com o tipo MIME correto
     const audioFile = new File([audioBlob], `audio_${Date.now()}.webm`, {
-      type: 'audio/webm',
+      type: audioBlob.type || 'audio/webm',
     });
+    
+    console.log('Arquivo de áudio criado:', audioFile.name, 'Tipo:', audioFile.type);
     
     setRecordedAudio({ blob: audioBlob, duration });
     setMediaFile(audioFile);
@@ -120,7 +122,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     
     toast({
       title: "Áudio gravado",
-      description: `Gravação de ${duration} segundos concluída!`,
+      description: `Gravação de ${Math.round(duration)} segundos concluída!`,
     });
   };
 
@@ -163,6 +165,16 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
       toast({
         title: "Mensagem obrigatória",
         description: "Por favor, digite uma mensagem.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validação específica para áudio
+    if (mediaType === 'audio' && !mediaFile) {
+      toast({
+        title: "Áudio não encontrado",
+        description: "Por favor, grave um áudio antes de enviar.",
         variant: "destructive",
       });
       return;
@@ -310,7 +322,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                         <Mic className="h-5 w-5 text-green-600" />
                         {recordedAudio && (
                           <span className="text-xs text-green-700">
-                            ({Math.floor(recordedAudio.duration / 60)}:{(recordedAudio.duration % 60).toString().padStart(2, '0')})
+                            ({Math.floor(recordedAudio.duration)}s)
                           </span>
                         )}
                       </div>
