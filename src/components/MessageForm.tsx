@@ -275,7 +275,6 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   onChange={(e) => setPhoneNumber(formatPhoneNumber(e.target.value))}
                   className="pl-10 text-lg h-12"
                   disabled={isSubmitting}
-                  inputMode="numeric"
                 />
                 <Phone className="absolute left-3 top-3 h-6 w-6 text-gray-400" />
               </div>
