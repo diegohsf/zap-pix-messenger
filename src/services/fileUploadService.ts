@@ -10,17 +10,18 @@ export const uploadFile = async (
   file: File, 
   mediaType: 'photo' | 'audio' | 'video'
 ): Promise<UploadResult> => {
-  console.log('Iniciando upload do arquivo:', file.name);
+  console.log('Iniciando upload do arquivo:', file.name, 'Tipo:', file.type);
 
   // Validar tipo de arquivo
   const allowedTypes = {
     photo: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-    audio: ['audio/mpeg', 'audio/wav', 'audio/ogg'],
+    audio: ['audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/webm', 'audio/mp4', 'audio/x-m4a'],
     video: ['video/mp4', 'video/webm', 'video/quicktime']
   };
 
   if (!allowedTypes[mediaType].includes(file.type)) {
-    throw new Error(`Tipo de arquivo não permitido para ${mediaType}`);
+    console.error('Tipo de arquivo não permitido:', file.type, 'Para mídia:', mediaType);
+    throw new Error(`Tipo de arquivo não permitido para ${mediaType}: ${file.type}`);
   }
 
   // Validar tamanho do arquivo (50MB máximo)

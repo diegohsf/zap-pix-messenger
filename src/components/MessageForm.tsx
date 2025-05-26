@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Upload, Video, Image, Phone, MessageSquare, Mic } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AudioRecorder from './AudioRecorder';
+import AudioPlayer from './AudioPlayer';
 
 interface MessageFormProps {
   onSubmit: (data: MessageData) => void;
@@ -336,6 +336,14 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   >
                     Remover
                   </Button>
+                </div>
+              )}
+
+              {/* Player de áudio quando há áudio gravado */}
+              {mediaType === 'audio' && recordedAudio && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Prévia do áudio gravado:</label>
+                  <AudioPlayer audioBlob={recordedAudio.blob} duration={recordedAudio.duration} />
                 </div>
               )}
             </div>
