@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { SavedMessage } from '@/services/messageService';
-import { LogOut, DollarSign, Clock, CheckCircle } from 'lucide-react';
+import { LogOut, DollarSign, Clock, CheckCircle, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface AdminDashboardProps {
@@ -92,6 +92,22 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     }
   };
 
+  const getMediaTypeBadge = (mediaType: string) => {
+    if (mediaType === 'none') return null;
+    
+    const colors = {
+      photo: 'bg-blue-500',
+      audio: 'bg-purple-500',
+      video: 'bg-red-500'
+    };
+    
+    return (
+      <Badge className={colors[mediaType as keyof typeof colors] || 'bg-gray-500'}>
+        {mediaType}
+      </Badge>
+    );
+  };
+
   useEffect(() => {
     fetchMessages();
   }, []);
@@ -174,6 +190,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                     <TableHead>Data</TableHead>
                     <TableHead>Telefone</TableHead>
                     <TableHead>Mensagem</TableHead>
+                    <TableHead>Mídia</TableHead>
                     <TableHead>Valor</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Pago em</TableHead>
@@ -190,6 +207,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                       </TableCell>
                       <TableCell className="max-w-xs truncate">
                         {message.message_text}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {getMediaTypeBadge(message.media_type)}
+                          {message.media_file_url && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={() => window.open(message.media_file_url, '_blank')}
+                            >
+                              <ExternalLink className="h-3 w-3" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="font-semibold">
                         {formatCurrency(message.price)}
