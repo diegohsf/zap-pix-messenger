@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -82,12 +81,15 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
       setPixCode(data.pixCode);
       setQrCodeUrl(data.qrCodeUrl);
-      setChargeId(data.chargeId);
+      
+      // Extrair o chargeId corretamente da resposta
+      const extractedChargeId = data.chargeId || data.charge?.globalID || `charge_${Date.now()}`;
+      setChargeId(extractedChargeId);
 
       // Atualizar mensagem com dados do PIX
       await updateMessagePayment(messageId, {
-        transaction_id: `PIX_${data.chargeId}`,
-        openpix_charge_id: data.chargeId,
+        transaction_id: `PIX_${extractedChargeId}`,
+        openpix_charge_id: extractedChargeId,
         pix_code: data.pixCode,
         qr_code_url: data.qrCodeUrl,
         status: 'pending_payment' as any
@@ -120,6 +122,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             pix_code: pixCode,
             qr_code_url: qrCodeUrl,
             status: 'paid'
+          });
+
+          toast({
+            title: "Pagamento confirmado!",
+            description: "Redirecionando para a página de confirmação...",
           });
 
           onPaymentConfirmed(transactionId);
