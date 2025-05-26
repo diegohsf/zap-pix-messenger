@@ -37,6 +37,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
   const [isRecording, setIsRecording] = useState(false);
   const [recordedAudio, setRecordedAudio] = useState<{ blob: Blob; duration: number } | null>(null);
   const [showVoiceModulator, setShowVoiceModulator] = useState(false);
+  const [hasShownInitialModulation, setHasShownInitialModulation] = useState(false);
   const { toast } = useToast();
 
   const formatPhoneNumber = (value: string) => {
@@ -112,6 +113,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
       // Limpar áudio gravado se houver
       setRecordedAudio(null);
       setShowVoiceModulator(false);
+      setHasShownInitialModulation(false);
       toast({
         title: "Arquivo selecionado",
         description: `${type === 'photo' ? 'Foto' : 'Vídeo'} carregado com sucesso!`,
@@ -141,7 +143,8 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     setMediaFile(audioFile);
     setMediaType('audio');
     setIsRecording(false);
-    setShowVoiceModulator(true); // Mostrar opções de modulação
+    setShowVoiceModulator(true);
+    setHasShownInitialModulation(false); // Reset para novo áudio
     
     toast({
       title: "Áudio gravado",
@@ -163,10 +166,15 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     setMediaFile(modulatedFile);
     setRecordedAudio(prev => prev ? { ...prev, blob: modulatedBlob } : null);
     
-    toast({
-      title: "Voz modulada",
-      description: "Modulação aplicada com sucesso!",
-    });
+    // Só mostrar toast após a primeira modulação
+    if (hasShownInitialModulation) {
+      toast({
+        title: "Voz modulada",
+        description: "Modulação aplicada com sucesso!",
+      });
+    } else {
+      setHasShownInitialModulation(true);
+    }
   };
 
   const handleCancelAudio = () => {
@@ -175,6 +183,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     setRecordedAudio(null);
     setMediaFile(null);
     setShowVoiceModulator(false);
+    setHasShownInitialModulation(false);
     if (mediaType === 'audio') {
       setMediaType('none');
     }
@@ -187,6 +196,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     setRecordedAudio(null);
     setIsRecording(false);
     setShowVoiceModulator(false);
+    setHasShownInitialModulation(false);
   };
 
   const handleSubmit = () => {

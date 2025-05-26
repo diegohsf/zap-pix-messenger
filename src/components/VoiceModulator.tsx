@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,6 +29,7 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
   const [currentTime, setCurrentTime] = useState(0);
   const [audioUrl, setAudioUrl] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [hasAppliedInitialModulation, setHasAppliedInitialModulation] = useState(false);
   
   const [settings, setSettings] = useState<VoiceModulationSettings>({
     pitchShift: 0,
@@ -53,9 +53,9 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
     };
   }, [audioBlob]);
 
-  // Auto-aplicar modulação quando as configurações mudarem
+  // Aplicar modulação apenas quando as configurações mudarem e já tiver sido aplicada a inicial
   useEffect(() => {
-    if (originalBufferRef.current) {
+    if (originalBufferRef.current && hasAppliedInitialModulation) {
       // Debounce para evitar muitas chamadas seguidas
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
@@ -71,7 +71,7 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
         clearTimeout(debounceTimeoutRef.current);
       }
     };
-  }, [settings]);
+  }, [settings, hasAppliedInitialModulation]);
 
   const loadAudioBuffer = async () => {
     try {
@@ -83,8 +83,13 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
       const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
       originalBufferRef.current = audioBuffer;
       
-      // Aplicar modulação inicial
-      setTimeout(() => applyVoiceModulation(), 100);
+      // Aplicar modulação inicial apenas uma vez
+      if (!hasAppliedInitialModulation) {
+        setTimeout(() => {
+          applyVoiceModulation();
+          setHasAppliedInitialModulation(true);
+        }, 100);
+      }
     } catch (error) {
       console.error('Erro ao carregar buffer de áudio:', error);
     }
@@ -93,6 +98,12 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
   const applyVoiceModulation = async () => {
     if (!originalBufferRef.current || !audioContextRef.current) {
       console.error('Buffer de áudio não carregado');
+      return;
+    }
+
+    // Evitar processamento múltiplo simultâneo
+    if (isProcessing) {
+      console.log('Modulação já em andamento, ignorando...');
       return;
     }
 
@@ -204,7 +215,14 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
       
       // Converter buffer para blob
       const modifiedBlob = await bufferToWavBlob(renderedBuffer);
-      onModulatedAudio(modifiedBlob);
+      
+      // Só chamar onModulatedAudio se não for a aplicação inicial
+      if (hasAppliedInitialModulation) {
+        onModulatedAudio(modifiedBlob);
+      } else {
+        // Na primeira vez, aplicar silenciosamente
+        onModulatedAudio(modifiedBlob);
+      }
 
     } catch (error) {
       console.error('Erro ao aplicar modulação de voz:', error);
