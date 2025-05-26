@@ -16,7 +16,9 @@ const Index: React.FC = () => {
   const { toast } = useToast();
 
   const handleFormSubmit = async (data: MessageData) => {
-    console.log('Dados do formulário:', data);
+    console.log('=== PROCESSANDO ENVIO DO FORMULÁRIO ===');
+    console.log('Dados recebidos:', data);
+    
     setIsSubmitting(true);
     
     try {
@@ -25,11 +27,21 @@ const Index: React.FC = () => {
       
       // Upload do arquivo de mídia se houver
       if (data.mediaFile && data.mediaType !== 'none') {
-        console.log('Fazendo upload do arquivo:', data.mediaFile.name);
-        const uploadResult = await uploadFile(data.mediaFile, data.mediaType);
-        fileUrl = uploadResult.url;
-        fileName = uploadResult.fileName;
-        console.log('Arquivo enviado com sucesso:', { fileUrl, fileName });
+        console.log('=== INICIANDO UPLOAD DE MÍDIA ===');
+        console.log('Arquivo:', data.mediaFile.name);
+        console.log('Tipo:', data.mediaFile.type);
+        console.log('Tamanho:', data.mediaFile.size, 'bytes');
+        console.log('Tipo de mídia:', data.mediaType);
+        
+        try {
+          const uploadResult = await uploadFile(data.mediaFile, data.mediaType);
+          fileUrl = uploadResult.url;
+          fileName = uploadResult.fileName;
+          console.log('✅ Upload concluído:', { fileUrl, fileName });
+        } catch (uploadError) {
+          console.error('❌ ERRO no upload:', uploadError);
+          throw uploadError;
+        }
       }
 
       // Preparar dados para salvar no banco
@@ -42,9 +54,12 @@ const Index: React.FC = () => {
         price: data.price
       };
 
+      console.log('=== SALVANDO MENSAGEM NO BANCO ===');
+      console.log('Dados para o banco:', messageData);
+
       // Salvar mensagem no banco de dados
       const savedMessage = await saveMessage(messageData);
-      console.log('Mensagem salva no banco:', savedMessage);
+      console.log('✅ Mensagem salva:', savedMessage);
       
       // Armazenar ID da mensagem e dados
       setCurrentMessageId(savedMessage.id);
@@ -59,10 +74,18 @@ const Index: React.FC = () => {
       setShowPaymentModal(true);
       
     } catch (error) {
-      console.error('Erro ao processar mensagem:', error);
+      console.error('❌ ERRO ao processar mensagem:', error);
+      console.error('Stack trace:', error);
+      
+      let errorMessage = "Erro ao processar mensagem. Tente novamente.";
+      
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Erro",
-        description: "Erro ao processar mensagem. Tente novamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {

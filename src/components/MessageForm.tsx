@@ -106,14 +106,24 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
   };
 
   const handleAudioRecorded = (audioBlob: Blob, duration: number) => {
-    console.log('Áudio gravado:', audioBlob.size, 'bytes, duração:', duration, 'segundos');
+    console.log('=== ÁUDIO GRAVADO ===');
+    console.log('Tamanho do blob:', audioBlob.size, 'bytes');
+    console.log('Duração:', duration, 'segundos');
+    console.log('Tipo MIME do blob:', audioBlob.type);
+    
+    // Garantir que o tipo MIME está correto
+    const mimeType = audioBlob.type || 'audio/webm';
+    console.log('Tipo MIME final:', mimeType);
     
     // Criar um arquivo a partir do blob com o tipo MIME correto
     const audioFile = new File([audioBlob], `audio_${Date.now()}.webm`, {
-      type: audioBlob.type || 'audio/webm',
+      type: mimeType,
     });
     
-    console.log('Arquivo de áudio criado:', audioFile.name, 'Tipo:', audioFile.type);
+    console.log('Arquivo criado:');
+    console.log('- Nome:', audioFile.name);
+    console.log('- Tipo:', audioFile.type);
+    console.log('- Tamanho:', audioFile.size, 'bytes');
     
     setRecordedAudio({ blob: audioBlob, duration });
     setMediaFile(audioFile);
@@ -145,7 +155,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
   };
 
   const handleSubmit = () => {
-    console.log('=== INICIANDO VALIDAÇÃO DO FORMULÁRIO ===');
+    console.log('=== VALIDAÇÃO DO FORMULÁRIO ===');
     console.log('Número:', phoneNumber);
     console.log('Mensagem:', message);
     console.log('Tipo de mídia:', mediaType);
@@ -171,13 +181,28 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     }
 
     // Validação específica para áudio
-    if (mediaType === 'audio' && !mediaFile) {
-      toast({
-        title: "Áudio não encontrado",
-        description: "Por favor, grave um áudio antes de enviar.",
-        variant: "destructive",
-      });
-      return;
+    if (mediaType === 'audio') {
+      if (!mediaFile) {
+        console.error('❌ ERRO: Áudio selecionado mas arquivo não encontrado');
+        toast({
+          title: "Áudio não encontrado",
+          description: "Por favor, grave um áudio antes de enviar.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (!recordedAudio) {
+        console.error('❌ ERRO: Arquivo de áudio existe mas dados do blob não encontrados');
+        toast({
+          title: "Dados do áudio perdidos",
+          description: "Por favor, grave o áudio novamente.",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      console.log('✅ Validação de áudio passou - arquivo e blob encontrados');
     }
 
     const formData: MessageData = {
@@ -188,9 +213,9 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
       price: calculatePrice(),
     };
 
-    console.log('=== DADOS FINAIS DO FORMULÁRIO ===');
-    console.log('Dados que serão enviados:', formData);
-    console.log('==========================================');
+    console.log('=== DADOS FINAIS PARA ENVIO ===');
+    console.log('Dados do formulário:', formData);
+    console.log('=====================================');
 
     onSubmit(formData);
   };
