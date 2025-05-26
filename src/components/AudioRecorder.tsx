@@ -1,7 +1,6 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { mic, mic-off, pause, trash-2 } from 'lucide-react';
+import { Mic, MicOff, Pause, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface AudioRecorderProps {
