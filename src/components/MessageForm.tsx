@@ -121,28 +121,14 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     console.log('Duração:', duration, 'segundos');
     console.log('Tipo MIME do blob:', audioBlob.type);
     
-    // Criar um arquivo WebM a partir do blob
-    const mimeType = audioBlob.type;
-    let fileName = `audio_${Date.now()}`;
-    let fileExtension = 'webm';
+    // Criar um arquivo WAV a partir do blob
+    const fileName = `audio_${Date.now()}.wav`;
     
-    // Determinar extensão baseada no tipo MIME
-    if (mimeType.includes('webm')) {
-      fileExtension = 'webm';
-    } else if (mimeType.includes('wav')) {
-      fileExtension = 'wav';
-    } else if (mimeType.includes('ogg')) {
-      fileExtension = 'ogg';
-    } else {
-      // Fallback para webm
-      fileExtension = 'webm';
-    }
-    
-    const audioFile = new File([audioBlob], `${fileName}.${fileExtension}`, {
-      type: mimeType,
+    const audioFile = new File([audioBlob], fileName, {
+      type: 'audio/wav',
     });
     
-    console.log('Arquivo criado:');
+    console.log('Arquivo WAV criado:');
     console.log('- Nome:', audioFile.name);
     console.log('- Tipo:', audioFile.type);
     console.log('- Tamanho:', audioFile.size, 'bytes');
@@ -154,7 +140,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     
     toast({
       title: "Áudio gravado",
-      description: `Gravação de ${Math.round(duration)} segundos concluída!`,
+      description: `Gravação de ${Math.round(duration)} segundos concluída em WAV!`,
     });
   };
 

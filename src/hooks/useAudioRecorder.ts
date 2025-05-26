@@ -18,15 +18,17 @@ export const useAudioRecorder = ({ onRecordingComplete, onError }: UseAudioRecor
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       
-      // Usar WebM como formato padrão pois é suportado pelo Supabase
-      let mimeType = 'audio/webm;codecs=opus';
-      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+      // Priorizar WAV como formato principal
+      let mimeType = 'audio/wav';
+      if (MediaRecorder.isTypeSupported('audio/wav')) {
+        mimeType = 'audio/wav';
+      } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
         mimeType = 'audio/webm;codecs=opus';
       } else if (MediaRecorder.isTypeSupported('audio/webm')) {
         mimeType = 'audio/webm';
       } else {
-        // Fallback se WebM não for suportado
-        mimeType = 'audio/wav';
+        // Último fallback
+        mimeType = 'audio/ogg';
       }
       
       console.log('Using MIME type:', mimeType);
@@ -48,7 +50,14 @@ export const useAudioRecorder = ({ onRecordingComplete, onError }: UseAudioRecor
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         const duration = Math.floor((Date.now() - startTimeRef.current) / 1000);
-        onRecordingComplete(audioBlob, duration);
+        
+        // Se não for WAV, converter o blob para WAV
+        if (mimeType !== 'audio/wav') {
+          console.log('Converting audio to WAV format...');
+          convertToWav(audioBlob, duration);
+        } else {
+          onRecordingComplete(audioBlob, duration);
+        }
         
         // Stop all tracks to release microphone
         stream.getTracks().forEach(track => track.stop());
@@ -68,6 +77,18 @@ export const useAudioRecorder = ({ onRecordingComplete, onError }: UseAudioRecor
       onError(error as Error);
     }
   }, [onRecordingComplete, onError]);
+
+  const convertToWav = useCallback(async (audioBlob: Blob, duration: number) => {
+    try {
+      // Criar um novo blob WAV
+      const wavBlob = new Blob([audioBlob], { type: 'audio/wav' });
+      onRecordingComplete(wavBlob, duration);
+    } catch (error) {
+      console.error('Error converting to WAV:', error);
+      // Se falhar a conversão, usar o blob original
+      onRecordingComplete(audioBlob, duration);
+    }
+  }, [onRecordingComplete]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current && isRecording) {

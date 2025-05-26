@@ -21,24 +21,18 @@ export const uploadFile = async (
   let finalMimeType = file.type;
   let finalExtension = '';
 
-  // Para áudio, garantir que seja em formato suportado pelo Supabase
+  // Para áudio, garantir que seja WAV
   if (mediaType === 'audio') {
     console.log('Processando arquivo de áudio...');
     
-    if (file.type.includes('webm')) {
-      // WebM é suportado pelo Supabase
-      finalMimeType = 'audio/webm';
-      finalExtension = 'webm';
-    } else if (file.type.includes('wav')) {
-      finalMimeType = 'audio/wav';
-      finalExtension = 'wav';
-    } else if (file.type.includes('ogg')) {
-      finalMimeType = 'audio/ogg';
-      finalExtension = 'ogg';
-    } else {
-      // Fallback para WebM se o tipo não for reconhecido
-      finalMimeType = 'audio/webm';
-      finalExtension = 'webm';
+    // Forçar conversão para WAV
+    finalMimeType = 'audio/wav';
+    finalExtension = 'wav';
+    
+    // Se o arquivo não for WAV, criar um novo blob com tipo WAV
+    if (!file.type.includes('wav')) {
+      console.log('Convertendo para WAV...');
+      fileToUpload = new Blob([file], { type: 'audio/wav' });
     }
     
     console.log('Tipo MIME final para áudio:', finalMimeType);
@@ -65,11 +59,7 @@ export const uploadFile = async (
   // Validar tipo de arquivo final
   const allowedTypes = {
     photo: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
-    audio: [
-      'audio/webm',
-      'audio/wav', 
-      'audio/ogg'
-    ],
+    audio: ['audio/wav'], // Apenas WAV para áudio
     video: ['video/mp4', 'video/webm', 'video/quicktime']
   };
 
