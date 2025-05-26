@@ -9,6 +9,8 @@ import { Upload, Video, Image, Phone, MessageSquare, Mic } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AudioRecorder from './AudioRecorder';
 import AudioPlayer from './AudioPlayer';
+import FAQ from './FAQ';
+import Footer from './Footer';
 
 interface MessageFormProps {
   onSubmit: (data: MessageData) => void;
@@ -234,7 +236,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
           <p className="text-lg text-gray-600">Envie mensagens no WhatsApp sem se identificar</p>
         </div>
 
-        <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm">
+        <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm mb-8">
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-2xl text-gray-800 flex items-center justify-center gap-2">
               <Phone className="h-6 w-6 text-primary" />
@@ -418,18 +420,13 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                isRecording ? 'Finalize a gravação primeiro' : 
                '💬 Enviar Mensagem'}
             </Button>
-
-            <div className="flex justify-center gap-4 text-sm">
-              <Button variant="link" className="text-blue-600" disabled={isSubmitting}>
-                📞 Enviar Áudio
-              </Button>
-              <Button variant="link" className="text-purple-600" disabled={isSubmitting}>
-                📹 Enviar Foto/Vídeo
-              </Button>
-            </div>
           </CardContent>
         </Card>
+
+        <FAQ />
       </div>
+      
+      <Footer />
     </div>
   );
 };
