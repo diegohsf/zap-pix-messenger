@@ -1,10 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Share2, Copy, ArrowLeft, Smartphone, AlertCircle } from 'lucide-react';
+import { CheckCircle, Share2, Copy, ArrowLeft, Smartphone, AlertCircle, Image, Video, Mic } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getMessageByTransactionId, SavedMessage } from '@/services/messageService';
 
@@ -73,6 +72,91 @@ const ConfirmationPage: React.FC = () => {
     }
   };
 
+  const getMediaTypeDisplay = (mediaType: string) => {
+    switch (mediaType) {
+      case 'none': return 'Somente texto';
+      case 'photo': return 'Foto + Texto';
+      case 'audio': return 'Áudio + Texto';
+      case 'video': return 'Vídeo + Texto';
+      default: return 'Desconhecido';
+    }
+  };
+
+  const renderMediaPreview = () => {
+    if (!messageData?.media_file_url || messageData.media_type === 'none') {
+      return null;
+    }
+
+    const mediaUrl = messageData.media_file_url;
+
+    return (
+      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+        <div className="flex items-center gap-2 mb-3">
+          {messageData.media_type === 'photo' && <Image className="h-5 w-5 text-blue-600" />}
+          {messageData.media_type === 'video' && <Video className="h-5 w-5 text-purple-600" />}
+          {messageData.media_type === 'audio' && <Mic className="h-5 w-5 text-green-600" />}
+          <h4 className="font-medium text-gray-800 capitalize">
+            {messageData.media_type === 'photo' ? 'Foto enviada:' : 
+             messageData.media_type === 'video' ? 'Vídeo enviado:' : 
+             'Áudio enviado:'}
+          </h4>
+        </div>
+
+        <div className="rounded-lg overflow-hidden bg-white border border-gray-200">
+          {messageData.media_type === 'photo' && (
+            <img 
+              src={mediaUrl} 
+              alt="Foto enviada" 
+              className="max-w-full h-auto max-h-80 object-contain mx-auto block"
+              onError={(e) => {
+                console.error('Erro ao carregar imagem:', e);
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          )}
+
+          {messageData.media_type === 'video' && (
+            <video 
+              controls 
+              className="max-w-full h-auto max-h-80 mx-auto block"
+              onError={(e) => {
+                console.error('Erro ao carregar vídeo:', e);
+              }}
+            >
+              <source src={mediaUrl} type="video/mp4" />
+              <source src={mediaUrl} type="video/webm" />
+              <source src={mediaUrl} type="video/ogg" />
+              Seu navegador não suporta o elemento de vídeo.
+            </video>
+          )}
+
+          {messageData.media_type === 'audio' && (
+            <div className="p-4">
+              <audio 
+                controls 
+                className="w-full"
+                onError={(e) => {
+                  console.error('Erro ao carregar áudio:', e);
+                }}
+              >
+                <source src={mediaUrl} type="audio/wav" />
+                <source src={mediaUrl} type="audio/mp3" />
+                <source src={mediaUrl} type="audio/ogg" />
+                Seu navegador não suporta o elemento de áudio.
+              </audio>
+            </div>
+          )}
+        </div>
+
+        {messageData.media_file_name && (
+          <div className="mt-2 text-xs text-gray-500">
+            Nome do arquivo: {messageData.media_file_name}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-8 px-4">
@@ -113,16 +197,6 @@ const ConfirmationPage: React.FC = () => {
       </div>
     );
   }
-
-  const getMediaTypeDisplay = (mediaType: string) => {
-    switch (mediaType) {
-      case 'none': return 'Somente texto';
-      case 'photo': return 'Foto + Texto';
-      case 'audio': return 'Áudio + Texto';
-      case 'video': return 'Vídeo + Texto';
-      default: return 'Desconhecido';
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-8 px-4">
@@ -211,10 +285,14 @@ const ConfirmationPage: React.FC = () => {
               </ul>
             </div>
 
+            {/* Exibir mídia enviada */}
+            {renderMediaPreview()}
+
+            {/* Exibir texto da mensagem */}
             {messageData.message_text && (
               <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <h4 className="font-medium text-gray-800 mb-2">Mensagem:</h4>
-                <p className="text-sm text-gray-600 break-words">{messageData.message_text}</p>
+                <h4 className="font-medium text-gray-800 mb-2">Mensagem de texto:</h4>
+                <p className="text-sm text-gray-600 break-words whitespace-pre-wrap">{messageData.message_text}</p>
               </div>
             )}
 
