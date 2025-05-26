@@ -9,7 +9,63 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      messages: {
+        Row: {
+          created_at: string
+          id: string
+          media_file_name: string | null
+          media_file_url: string | null
+          media_type: string
+          message_text: string
+          openpix_charge_id: string | null
+          paid_at: string | null
+          phone_number: string
+          pix_code: string | null
+          price: number
+          qr_code_url: string | null
+          sent_at: string | null
+          status: string
+          transaction_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          media_file_name?: string | null
+          media_file_url?: string | null
+          media_type?: string
+          message_text: string
+          openpix_charge_id?: string | null
+          paid_at?: string | null
+          phone_number: string
+          pix_code?: string | null
+          price: number
+          qr_code_url?: string | null
+          sent_at?: string | null
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          media_file_name?: string | null
+          media_file_url?: string | null
+          media_type?: string
+          message_text?: string
+          openpix_charge_id?: string | null
+          paid_at?: string | null
+          phone_number?: string
+          pix_code?: string | null
+          price?: number
+          qr_code_url?: string | null
+          sent_at?: string | null
+          status?: string
+          transaction_id?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

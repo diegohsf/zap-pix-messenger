@@ -4,49 +4,54 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Share2, Copy, ArrowLeft, Smartphone } from 'lucide-react';
+import { CheckCircle, Share2, Copy, ArrowLeft, Smartphone, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getMessageByTransactionId, SavedMessage } from '@/services/messageService';
 
 const ConfirmationPage: React.FC = () => {
   const { transactionId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [shareUrl, setShareUrl] = useState('');
+  const [messageData, setMessageData] = useState<SavedMessage | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Gera a URL única para compartilhamento
-    const currentUrl = window.location.href;
-    setShareUrl(currentUrl);
+    const loadMessageData = async () => {
+      if (!transactionId) {
+        setError('ID da transação não encontrado');
+        setIsLoading(false);
+        return;
+      }
 
-    // Simula o envio dos dados para o webhook do n8n
-    const sendToWebhook = async () => {
       try {
-        console.log('Enviando dados para webhook n8n:', {
-          transactionId,
-          status: 'paid',
-          webhook_url: 'https://webhook.golawtech.com.br/webhook/9d0cf2ea-019d-4e28-b147-f542b27a6cc9'
-        });
+        console.log('Loading message data for transaction:', transactionId);
+        const message = await getMessageByTransactionId(transactionId);
+        
+        if (!message) {
+          setError('Transação não encontrada');
+          setIsLoading(false);
+          return;
+        }
 
-        // Aqui seria feita a chamada real para o webhook
-        // await fetch('https://webhook.golawtech.com.br/webhook/9d0cf2ea-019d-4e28-b147-f542b27a6cc9', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify(webhookData)
-        // });
+        console.log('Message data loaded:', message);
+        setMessageData(message);
 
-        toast({
-          title: "Dados enviados!",
-          description: "Informações foram enviadas para processamento.",
-        });
+        // Gerar URL de compartilhamento
+        const currentUrl = window.location.href;
+        setShareUrl(currentUrl);
+
       } catch (error) {
-        console.error('Erro ao enviar para webhook:', error);
+        console.error('Error loading message data:', error);
+        setError('Erro ao carregar dados da transação');
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    if (transactionId) {
-      sendToWebhook();
-    }
-  }, [transactionId, toast]);
+    loadMessageData();
+  }, [transactionId]);
 
   const copyShareUrl = () => {
     navigator.clipboard.writeText(shareUrl);
@@ -65,6 +70,57 @@ const ConfirmationPage: React.FC = () => {
       });
     } else {
       copyShareUrl();
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-8 px-4">
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500 mx-auto mb-4"></div>
+            <p className="text-gray-600">Carregando dados da transação...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !messageData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 py-8 px-4">
+        <div className="max-w-2xl mx-auto">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/')}
+            className="mb-6 flex items-center gap-2 text-gray-600 hover:text-gray-800"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Voltar ao início
+          </Button>
+
+          <Card className="bg-red-50 border-red-200">
+            <CardContent className="p-6 text-center">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <h2 className="text-xl font-bold text-red-800 mb-2">Erro</h2>
+              <p className="text-red-600 mb-4">{error}</p>
+              <Button onClick={() => navigate('/')} className="bg-red-500 hover:bg-red-600 text-white">
+                Voltar ao início
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  const getMediaTypeDisplay = (mediaType: string) => {
+    switch (mediaType) {
+      case 'none': return 'Somente texto';
+      case 'photo': return 'Foto + Texto';
+      case 'audio': return 'Áudio + Texto';
+      case 'video': return 'Vídeo + Texto';
+      default: return 'Desconhecido';
     }
   };
 
@@ -109,18 +165,30 @@ const ConfirmationPage: React.FC = () => {
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm font-medium text-gray-700">Status:</span>
                 <Badge className="bg-green-500 text-white">
-                  ✅ Pago
+                  ✅ {messageData.status === 'paid' ? 'Pago' : messageData.status}
                 </Badge>
               </div>
               
               <div className="space-y-2 text-sm text-gray-600">
                 <div className="flex justify-between">
                   <span>ID da Transação:</span>
-                  <span className="font-mono text-xs">{transactionId}</span>
+                  <span className="font-mono text-xs">{messageData.transaction_id}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>Data:</span>
-                  <span>{new Date().toLocaleString('pt-BR')}</span>
+                  <span>Número WhatsApp:</span>
+                  <span className="font-mono">{messageData.phone_number}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Tipo de Mensagem:</span>
+                  <span>{getMediaTypeDisplay(messageData.media_type)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Valor Pago:</span>
+                  <span className="font-semibold">R$ {messageData.price.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Data do Pagamento:</span>
+                  <span>{messageData.paid_at ? new Date(messageData.paid_at).toLocaleString('pt-BR') : 'N/A'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Método:</span>
@@ -135,10 +203,20 @@ const ConfirmationPage: React.FC = () => {
               </h3>
               <ul className="text-sm text-blue-700 space-y-1">
                 <li>• Sua mensagem foi enviada para processamento</li>
-                <li>• Em breve ela será entregue no WhatsApp informado</li>
+                <li>• Em breve ela será entregue no WhatsApp: {messageData.phone_number}</li>
                 <li>• Você pode compartilhar esta confirmação</li>
+                {messageData.media_file_url && (
+                  <li>• Arquivo de mídia foi processado com sucesso</li>
+                )}
               </ul>
             </div>
+
+            {messageData.message_text && (
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <h4 className="font-medium text-gray-800 mb-2">Mensagem:</h4>
+                <p className="text-sm text-gray-600 break-words">{messageData.message_text}</p>
+              </div>
+            )}
 
             <div className="space-y-3">
               <label className="text-sm font-medium text-gray-700">
