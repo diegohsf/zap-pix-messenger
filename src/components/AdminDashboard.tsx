@@ -213,12 +213,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                           {getMediaTypeBadge(message.media_type)}
                           {message.media_file_url && (
                             <Button
-                              variant="ghost"
+                              variant="outline"
                               size="sm"
-                              className="h-6 w-6 p-0"
+                              className="h-8 px-3 gap-2 hover:bg-blue-50 hover:border-blue-300"
                               onClick={() => window.open(message.media_file_url, '_blank')}
                             >
-                              <ExternalLink className="h-3 w-3" />
+                              <ExternalLink className="h-4 w-4" />
+                              Ver mídia
                             </Button>
                           )}
                         </div>
