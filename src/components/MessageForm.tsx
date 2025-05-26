@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,26 +58,33 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
 
   const validatePhoneNumber = (phone: string) => {
     const numbers = phone.replace(/\D/g, '');
+    
+    // Deve ter 10 ou 11 dígitos
     if (numbers.length !== 10 && numbers.length !== 11) return false;
     
     const ddd = parseInt(numbers.slice(0, 2));
     
-    // DDD acima de 30 não precisa do dígito 9
-    if (ddd > 30 && numbers.length === 11) {
-      return numbers[2] !== '9';
+    // Validar se o DDD existe (11 a 99)
+    if (ddd < 11 || ddd > 99) return false;
+    
+    // DDD acima de 30: permite 8 ou 9 dígitos após o DDD
+    if (ddd > 30) {
+      return numbers.length === 10 || numbers.length === 11;
     }
     
-    // DDD abaixo de 30 exige o dígito 9
-    if (ddd <= 30 && numbers.length === 11) {
-      return numbers[2] === '9';
-    }
-    
-    // Para números com 10 dígitos, só aceita se DDD > 30
-    if (numbers.length === 10) {
-      return ddd > 30;
+    // DDD igual ou abaixo de 30: obrigatório 9 dígitos após o DDD (deve começar com 9)
+    if (ddd <= 30) {
+      return numbers.length === 11 && numbers[2] === '9';
     }
     
     return false;
+  };
+
+  const formatPhoneForWebhook = (phone: string) => {
+    // Remove tudo que não for número
+    const numbers = phone.replace(/\D/g, '');
+    // Adiciona o código do país 55 na frente
+    return `55${numbers}`;
   };
 
   const calculatePrice = () => {
@@ -169,7 +175,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     if (!validatePhoneNumber(phoneNumber)) {
       toast({
         title: "Número inválido",
-        description: "Por favor, insira um número de WhatsApp válido.",
+        description: "Por favor, insira um número de WhatsApp válido. DDD acima de 30 aceita 8 ou 9 dígitos. DDD até 30 deve ter 9 dígitos iniciando com 9.",
         variant: "destructive",
       });
       return;
@@ -209,8 +215,12 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
       console.log('✅ Validação de áudio passou - arquivo e blob encontrados');
     }
 
+    // Formatar número para webhook (55 + DDD + número)
+    const formattedPhoneNumber = formatPhoneForWebhook(phoneNumber);
+    console.log('Número formatado para webhook:', formattedPhoneNumber);
+
     const formData: MessageData = {
-      phoneNumber,
+      phoneNumber: formattedPhoneNumber, // Agora envia com código do país
       messageText: message,
       mediaType,
       mediaFile,
