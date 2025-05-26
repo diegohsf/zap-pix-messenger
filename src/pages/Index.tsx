@@ -78,6 +78,12 @@ const Index: React.FC = () => {
     navigate(`/confirmacao/${transactionId}`);
   };
 
+  const handleClosePaymentModal = () => {
+    setShowPaymentModal(false);
+    setCurrentMessageId(null);
+    setCurrentMessageData(null);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
       <MessageForm 
@@ -89,6 +95,7 @@ const Index: React.FC = () => {
         messageId={currentMessageId}
         messageData={currentMessageData}
         onPaymentConfirmed={handlePaymentConfirmed}
+        onClose={handleClosePaymentModal}
       />
     </div>
   );
