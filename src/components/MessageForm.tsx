@@ -81,12 +81,13 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
   const calculatePrice = () => {
     switch (mediaType) {
       case 'video':
-        return 10.00;
+        return 10.00; // R$ 5,00 (base) + R$ 5,00 (vídeo)
       case 'photo':
+        return 10.00; // R$ 5,00 (base) + R$ 5,00 (foto)
       case 'audio':
-        return 5.00;
+        return 7.00; // R$ 5,00 (base) + R$ 2,00 (áudio)
       default:
-        return 5.00;
+        return 5.00; // R$ 5,00 (somente texto)
     }
   };
 
@@ -306,6 +307,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   >
                     <Image className="h-6 w-6" />
                     <span className="text-xs">Enviar Foto</span>
+                    <span className="text-xs text-green-600 font-semibold">+ R$ 5,00</span>
                   </Button>
                 </div>
 
@@ -334,6 +336,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   >
                     <Video className="h-6 w-6" />
                     <span className="text-xs">Enviar Vídeo</span>
+                    <span className="text-xs text-blue-600 font-semibold">+ R$ 5,00</span>
                   </Button>
                 </div>
               </div>
@@ -393,6 +396,12 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                 <Badge variant="secondary" className="text-lg font-bold px-3 py-1">
                   R$ {calculatePrice().toFixed(2)}
                 </Badge>
+              </div>
+              <div className="text-xs text-gray-600 mt-2 space-y-1">
+                <p>• Somente texto: R$ 5,00</p>
+                <p>• Foto + Texto: R$ 10,00 (R$ 5,00 + R$ 5,00)</p>
+                <p>• Áudio + Texto: R$ 7,00 (R$ 5,00 + R$ 2,00)</p>
+                <p>• Vídeo + Texto: R$ 10,00 (R$ 5,00 + R$ 5,00)</p>
               </div>
               <p className="text-xs text-gray-600 mt-2">
                 Ao enviar uma mensagem, você concorda com nossos Termos e Condições 
