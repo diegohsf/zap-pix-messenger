@@ -9,6 +9,49 @@ const RecentMessages: React.FC = () => {
   const { data: messages, isLoading } = useQuery({
     queryKey: ['recent-messages'],
     queryFn: async () => {
+      console.log('🔍 Buscando mensagens recentes...');
+      
+      // Primeiro, vamos verificar se há mensagens com status 'paid'
+      const { data: paidMessages, error: paidError } = await supabase
+        .from('messages')
+        .select('message_text, sent_at, status, paid_at')
+        .eq('status', 'paid')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      console.log('📊 Mensagens com status paid:', paidMessages);
+
+      if (paidError) {
+        console.error('❌ Erro ao buscar mensagens pagas:', paidError);
+      }
+
+      // Se não houver mensagens pagas com sent_at, vamos buscar mensagens pagas em geral
+      if (!paidMessages || paidMessages.length === 0 || !paidMessages.some(m => m.sent_at)) {
+        console.log('⚠️ Não há mensagens com sent_at, buscando mensagens pagas por paid_at...');
+        
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('messages')
+          .select('message_text, paid_at, status')
+          .eq('status', 'paid')
+          .not('paid_at', 'is', null)
+          .order('paid_at', { ascending: false })
+          .limit(5);
+
+        if (fallbackError) {
+          console.error('❌ Erro ao buscar mensagens por paid_at:', fallbackError);
+          throw fallbackError;
+        }
+
+        console.log('✅ Mensagens encontradas por paid_at:', fallbackData);
+
+        // Mapear paid_at para sent_at para compatibilidade
+        return (fallbackData || []).map(msg => ({
+          message_text: msg.message_text,
+          sent_at: msg.paid_at
+        }));
+      }
+
+      // Usar a query original se houver mensagens com sent_at
       const { data, error } = await supabase
         .from('messages')
         .select('message_text, sent_at')
@@ -18,10 +61,11 @@ const RecentMessages: React.FC = () => {
         .limit(5);
 
       if (error) {
-        console.error('Error fetching recent messages:', error);
+        console.error('❌ Erro ao buscar mensagens por sent_at:', error);
         throw error;
       }
 
+      console.log('✅ Mensagens encontradas por sent_at:', data);
       return data || [];
     },
     refetchInterval: 30000, // Atualiza a cada 30 segundos
@@ -80,6 +124,9 @@ const RecentMessages: React.FC = () => {
           <div className="text-center py-6">
             <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-2" />
             <p className="text-gray-500">Nenhuma mensagem enviada ainda</p>
+            <p className="text-xs text-gray-400 mt-1">
+              As mensagens aparecerão aqui após serem pagas e enviadas
+            </p>
           </div>
         )}
       </CardContent>
