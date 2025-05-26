@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import AudioRecorder from './AudioRecorder';
 import AudioPlayer from './AudioPlayer';
 import FAQ from './FAQ';
+import RecentMessages from './RecentMessages';
 import Footer from './Footer';
 
 interface MessageFormProps {
@@ -232,6 +233,15 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     onSubmit(formData);
   };
 
+  // Determinar o texto do botão com base no estado
+  const getButtonText = () => {
+    if (isRecording) return 'Finalize a gravação primeiro';
+    if (isSubmitting) {
+      return mediaFile && mediaType !== 'none' ? 'Enviando arquivo...' : 'Processando...';
+    }
+    return '💬 Enviar Mensagem';
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-8 px-4">
       <div className="max-w-2xl mx-auto">
@@ -419,14 +429,16 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
               disabled={isSubmitting || isRecording}
               className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary-hover"
             >
-              {isSubmitting ? 'Processando...' : 
-               isRecording ? 'Finalize a gravação primeiro' : 
-               '💬 Enviar Mensagem'}
+              {getButtonText()}
             </Button>
           </CardContent>
         </Card>
 
         <FAQ />
+        
+        <div className="mt-8">
+          <RecentMessages />
+        </div>
       </div>
       
       <Footer />
