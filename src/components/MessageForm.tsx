@@ -12,6 +12,7 @@ import AudioPlayer from './AudioPlayer';
 import FAQ from './FAQ';
 import RecentMessages from './RecentMessages';
 import Footer from './Footer';
+import VoiceModulator from './VoiceModulator';
 
 interface MessageFormProps {
   onSubmit: (data: MessageData) => void;
@@ -35,6 +36,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordedAudio, setRecordedAudio] = useState<{ blob: Blob; duration: number } | null>(null);
+  const [showVoiceModulator, setShowVoiceModulator] = useState(false);
   const { toast } = useToast();
 
   const formatPhoneNumber = (value: string) => {
@@ -109,6 +111,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
       setMediaType(type);
       // Limpar áudio gravado se houver
       setRecordedAudio(null);
+      setShowVoiceModulator(false);
       toast({
         title: "Arquivo selecionado",
         description: `${type === 'photo' ? 'Foto' : 'Vídeo'} carregado com sucesso!`,
@@ -138,10 +141,31 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     setMediaFile(audioFile);
     setMediaType('audio');
     setIsRecording(false);
+    setShowVoiceModulator(true); // Mostrar opções de modulação
     
     toast({
       title: "Áudio gravado",
       description: `Gravação de ${Math.round(duration)} segundos concluída em WAV!`,
+    });
+  };
+
+  const handleModulatedAudio = (modulatedBlob: Blob) => {
+    console.log('=== ÁUDIO MODULADO ===');
+    console.log('Tamanho do blob modulado:', modulatedBlob.size, 'bytes');
+    
+    // Criar arquivo com áudio modulado
+    const fileName = `audio_modulated_${Date.now()}.wav`;
+    const modulatedFile = new File([modulatedBlob], fileName, {
+      type: 'audio/wav',
+    });
+    
+    // Atualizar estado com áudio modulado
+    setMediaFile(modulatedFile);
+    setRecordedAudio(prev => prev ? { ...prev, blob: modulatedBlob } : null);
+    
+    toast({
+      title: "Voz modulada",
+      description: "Modulação aplicada com sucesso!",
     });
   };
 
@@ -150,6 +174,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     setIsRecording(false);
     setRecordedAudio(null);
     setMediaFile(null);
+    setShowVoiceModulator(false);
     if (mediaType === 'audio') {
       setMediaType('none');
     }
@@ -161,6 +186,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     setMediaFile(null);
     setRecordedAudio(null);
     setIsRecording(false);
+    setShowVoiceModulator(false);
   };
 
   const handleSubmit = () => {
@@ -405,6 +431,14 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Prévia do áudio gravado:</label>
                   <AudioPlayer audioBlob={recordedAudio.blob} duration={recordedAudio.duration} />
+                  
+                  {showVoiceModulator && (
+                    <VoiceModulator
+                      audioBlob={recordedAudio.blob}
+                      duration={recordedAudio.duration}
+                      onModulatedAudio={handleModulatedAudio}
+                    />
+                  )}
                 </div>
               )}
             </div>
