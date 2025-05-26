@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -381,7 +382,6 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                 </div>
               )}
 
-              {/* Player de áudio quando há áudio gravado */}
               {mediaType === 'audio' && recordedAudio && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Prévia do áudio gravado:</label>
@@ -398,6 +398,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                 <Badge variant="secondary" className="text-lg font-bold px-3 py-1">
                   R$ {calculatePrice().toFixed(2)}
                 </Badge>
+              </div>
               <p className="text-xs text-gray-600 mt-2">
                 Ao enviar uma mensagem, você concorda com nossos Termos e Condições 
                 e a Política de Privacidade.
