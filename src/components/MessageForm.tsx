@@ -398,13 +398,6 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                 <Badge variant="secondary" className="text-lg font-bold px-3 py-1">
                   R$ {calculatePrice().toFixed(2)}
                 </Badge>
-              </div>
-              <div className="text-xs text-gray-600 mt-2 space-y-1">
-                <p>• Somente texto: R$ 5,00</p>
-                <p>• Foto + Texto: R$ 10,00 (R$ 5,00 + R$ 5,00)</p>
-                <p>• Áudio + Texto: R$ 7,00 (R$ 5,00 + R$ 2,00)</p>
-                <p>• Vídeo + Texto: R$ 10,00 (R$ 5,00 + R$ 5,00)</p>
-              </div>
               <p className="text-xs text-gray-600 mt-2">
                 Ao enviar uma mensagem, você concorda com nossos Termos e Condições 
                 e a Política de Privacidade.
