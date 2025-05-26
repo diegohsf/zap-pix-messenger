@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -109,35 +110,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     }
   };
 
-  // Simular confirmação de pagamento após 30 segundos para demonstração
-  useEffect(() => {
-    if (chargeId && messageId) {
-      const paymentTimer = setTimeout(async () => {
-        try {
-          const transactionId = `TXN_${Date.now()}`;
-          
-          await updateMessagePayment(messageId, {
-            transaction_id: transactionId,
-            openpix_charge_id: chargeId,
-            pix_code: pixCode,
-            qr_code_url: qrCodeUrl,
-            status: 'paid'
-          });
-
-          toast({
-            title: "Pagamento confirmado!",
-            description: "Redirecionando para a página de confirmação...",
-          });
-
-          onPaymentConfirmed(transactionId);
-        } catch (error) {
-          console.error('Error confirming payment:', error);
-        }
-      }, 30000); // 30 segundos para demonstração
-
-      return () => clearTimeout(paymentTimer);
-    }
-  }, [chargeId, messageId, pixCode, qrCodeUrl, onPaymentConfirmed]);
+  // Remover a simulação de pagamento automática - agora só redireciona com webhook real
+  // O pagamento será confirmado via webhook do OpenPix quando realmente for pago
 
   const copyPixCode = () => {
     navigator.clipboard.writeText(pixCode);
