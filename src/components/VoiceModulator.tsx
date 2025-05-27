@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,7 +29,7 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
   const [currentTime, setCurrentTime] = useState(0);
   const [currentAudioUrl, setCurrentAudioUrl] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [hasAppliedInitialModulation, setHasAppliedInitialModulation] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   
   const [settings, setSettings] = useState<VoiceModulationSettings>({
     pitchShift: 0,
@@ -57,17 +56,20 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
     };
   }, [audioBlob]);
 
-  // Aplicar modulação quando as configurações mudarem
+  // Aplicar modulação quando as configurações mudarem (APÓS inicialização)
   useEffect(() => {
-    if (originalBufferRef.current && hasAppliedInitialModulation) {
+    if (originalBufferRef.current && isInitialized) {
+      console.log('🔄 Configurações alteradas, aplicando nova modulação...');
+      console.log('Configurações atuais:', settings);
+      
       // Debounce para evitar muitas chamadas seguidas
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }
       
       debounceTimeoutRef.current = setTimeout(() => {
-        applyVoiceModulation();
-      }, 300); // Reduzido para 300ms para resposta mais rápida
+        applyVoiceModulation(true); // true = mudança do usuário
+      }, 200); // Reduzido para 200ms para resposta mais rápida
     }
 
     return () => {
@@ -75,7 +77,7 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
         clearTimeout(debounceTimeoutRef.current);
       }
     };
-  }, [settings, hasAppliedInitialModulation]);
+  }, [settings, isInitialized]);
 
   const loadOriginalAudioBuffer = async () => {
     try {
@@ -98,19 +100,17 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
       const initialUrl = URL.createObjectURL(audioBlob);
       setCurrentAudioUrl(initialUrl);
       
-      // Aplicar modulação inicial apenas uma vez
-      if (!hasAppliedInitialModulation) {
-        setTimeout(() => {
-          applyVoiceModulation();
-          setHasAppliedInitialModulation(true);
-        }, 100);
-      }
+      // Aplicar modulação inicial
+      setTimeout(() => {
+        applyVoiceModulation(false); // false = primeira aplicação
+        setIsInitialized(true);
+      }, 100);
     } catch (error) {
       console.error('❌ Erro ao carregar buffer de áudio original:', error);
     }
   };
 
-  const applyVoiceModulation = async () => {
+  const applyVoiceModulation = async (isUserChange: boolean = false) => {
     if (!originalBufferRef.current || !audioContextRef.current) {
       console.error('❌ Buffer de áudio original não carregado');
       return;
@@ -247,13 +247,8 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
       
       console.log('✅ Modulação aplicada com sucesso!');
       
-      // Chamar callback apenas se não for a primeira aplicação
-      if (hasAppliedInitialModulation) {
-        onModulatedAudio(modifiedBlob);
-      } else {
-        // Na primeira vez, aplicar silenciosamente
-        onModulatedAudio(modifiedBlob);
-      }
+      // Sempre chamar callback
+      onModulatedAudio(modifiedBlob);
 
     } catch (error) {
       console.error('❌ Erro ao aplicar modulação de voz:', error);
