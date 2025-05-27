@@ -11,7 +11,6 @@ import AudioRecorder from './AudioRecorder';
 import AudioPlayer from './AudioPlayer';
 import FAQ from './FAQ';
 import RecentMessages from './RecentMessages';
-import Footer from './Footer';
 import VoiceModulator from './VoiceModulator';
 
 interface MessageFormProps {
