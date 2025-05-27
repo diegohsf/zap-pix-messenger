@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MessageForm, { MessageData } from '@/components/MessageForm';
 import PaymentModal from '@/components/PaymentModal';
+import Footer from '@/components/Footer';
 import { saveMessage } from '@/services/messageService';
 import { uploadFile } from '@/services/fileUploadService';
 import { useToast } from '@/hooks/use-toast';
@@ -108,11 +109,14 @@ const Index: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50">
-      <MessageForm 
-        onSubmit={handleFormSubmit} 
-        isSubmitting={isSubmitting}
-      />
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col">
+      <div className="flex-grow">
+        <MessageForm 
+          onSubmit={handleFormSubmit} 
+          isSubmitting={isSubmitting}
+        />
+      </div>
+      <Footer />
       <PaymentModal
         isOpen={showPaymentModal}
         messageId={currentMessageId}

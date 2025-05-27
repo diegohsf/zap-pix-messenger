@@ -5,11 +5,17 @@ import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   return (
-    <footer className="bg-gray-900 text-white py-8 mt-16">
-      <div className="max-w-4xl mx-auto px-4">
+    <footer className="bg-gray-900 text-white py-8 w-full">
+      <div className="max-w-full mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
-            <h3 className="text-lg font-semibold mb-4">Zap Elegante</h3>
+            <div className="flex items-center mb-4">
+              <img 
+                src="/lovable-uploads/3e6eee2a-1da2-41e1-9f5f-8714a36c8ce5.png" 
+                alt="Zap Elegante" 
+                className="h-12 w-auto"
+              />
+            </div>
             <p className="text-gray-400 text-sm">
               Envie mensagens no WhatsApp sem se identificar de forma segura e anônima.
             </p>
