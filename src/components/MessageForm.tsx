@@ -483,8 +483,6 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
           <RecentMessages />
         </div>
       </div>
-      
-      <Footer />
     </div>
   );
 };
