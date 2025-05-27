@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,7 +28,7 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
 }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
-  const [audioUrl, setAudioUrl] = useState<string>('');
+  const [currentAudioUrl, setCurrentAudioUrl] = useState<string>('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [hasAppliedInitialModulation, setHasAppliedInitialModulation] = useState(false);
   
@@ -40,20 +41,23 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  // Buffer do áudio ORIGINAL - nunca muda
   const originalBufferRef = useRef<AudioBuffer | null>(null);
+  // Buffer do áudio PROCESSADO - sempre recriado a partir do original
+  const processedBufferRef = useRef<AudioBuffer | null>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Carregar o áudio original apenas uma vez
   useEffect(() => {
-    const url = URL.createObjectURL(audioBlob);
-    setAudioUrl(url);
-    loadAudioBuffer();
-
+    loadOriginalAudioBuffer();
     return () => {
-      URL.revokeObjectURL(url);
+      if (currentAudioUrl) {
+        URL.revokeObjectURL(currentAudioUrl);
+      }
     };
   }, [audioBlob]);
 
-  // Aplicar modulação apenas quando as configurações mudarem e já tiver sido aplicada a inicial
+  // Aplicar modulação quando as configurações mudarem
   useEffect(() => {
     if (originalBufferRef.current && hasAppliedInitialModulation) {
       // Debounce para evitar muitas chamadas seguidas
@@ -63,7 +67,7 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
       
       debounceTimeoutRef.current = setTimeout(() => {
         applyVoiceModulation();
-      }, 500); // 500ms de delay
+      }, 300); // Reduzido para 300ms para resposta mais rápida
     }
 
     return () => {
@@ -73,15 +77,26 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
     };
   }, [settings, hasAppliedInitialModulation]);
 
-  const loadAudioBuffer = async () => {
+  const loadOriginalAudioBuffer = async () => {
     try {
       if (!audioContextRef.current) {
         audioContextRef.current = new AudioContext();
       }
 
+      console.log('🎵 Carregando áudio original...');
       const arrayBuffer = await audioBlob.arrayBuffer();
       const audioBuffer = await audioContextRef.current.decodeAudioData(arrayBuffer);
       originalBufferRef.current = audioBuffer;
+      
+      console.log('✅ Áudio original carregado:', {
+        duration: audioBuffer.duration,
+        sampleRate: audioBuffer.sampleRate,
+        numberOfChannels: audioBuffer.numberOfChannels
+      });
+      
+      // Criar URL inicial
+      const initialUrl = URL.createObjectURL(audioBlob);
+      setCurrentAudioUrl(initialUrl);
       
       // Aplicar modulação inicial apenas uma vez
       if (!hasAppliedInitialModulation) {
@@ -91,29 +106,30 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
         }, 100);
       }
     } catch (error) {
-      console.error('Erro ao carregar buffer de áudio:', error);
+      console.error('❌ Erro ao carregar buffer de áudio original:', error);
     }
   };
 
   const applyVoiceModulation = async () => {
     if (!originalBufferRef.current || !audioContextRef.current) {
-      console.error('Buffer de áudio não carregado');
+      console.error('❌ Buffer de áudio original não carregado');
       return;
     }
 
-    // Evitar processamento múltiplo simultâneo
     if (isProcessing) {
-      console.log('Modulação já em andamento, ignorando...');
+      console.log('⏳ Modulação já em andamento, ignorando...');
       return;
     }
 
     setIsProcessing(true);
+    console.log('🔄 Aplicando modulação de voz a partir do áudio original...');
+    console.log('Configurações:', settings);
 
     try {
       const audioContext = audioContextRef.current;
+      // SEMPRE usar o buffer original como base
       const originalBuffer = originalBufferRef.current;
       
-      // Criar um offline audio context para processamento mais eficiente
       const sampleRate = originalBuffer.sampleRate;
       const numberOfChannels = originalBuffer.numberOfChannels;
       
@@ -123,16 +139,14 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
       
       const offlineContext = new OfflineAudioContext(numberOfChannels, newLength, sampleRate);
       const source = offlineContext.createBufferSource();
-      source.buffer = originalBuffer;
-
-      // Aplicar mudança de velocidade
+      source.buffer = originalBuffer; // SEMPRE o original
       source.playbackRate.value = settings.speedChange;
 
       let audioNode: AudioNode = source;
 
       // Aplicar efeitos baseados no tipo de voz
       if (settings.voiceType === 'robotic') {
-        // Efeito robótico com wave shaper
+        console.log('🤖 Aplicando efeito robótico...');
         const waveShaperNode = offlineContext.createWaveShaper();
         const curve = new Float32Array(65536);
         for (let i = 0; i < 65536; i++) {
@@ -151,21 +165,25 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
       
       switch (settings.voiceType) {
         case 'female':
+          console.log('👩 Aplicando filtro feminino...');
           filter.type = 'highpass';
           filter.frequency.value = 200;
           filter.Q.value = 1;
           break;
         case 'male':
+          console.log('👨 Aplicando filtro masculino...');
           filter.type = 'lowpass';
           filter.frequency.value = 3000;
           filter.Q.value = 1;
           break;
         case 'chipmunk':
+          console.log('🐿️ Aplicando filtro chipmunk...');
           filter.type = 'highpass';
           filter.frequency.value = 400;
           filter.Q.value = 2;
           break;
         case 'deep':
+          console.log('📢 Aplicando filtro grave...');
           filter.type = 'lowpass';
           filter.frequency.value = 1500;
           filter.Q.value = 2;
@@ -180,14 +198,16 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
 
       // Aplicar pitch shift se necessário
       if (settings.pitchShift !== 0) {
+        console.log(`🎵 Aplicando pitch shift: ${settings.pitchShift}%`);
         const gainNode = offlineContext.createGain();
-        gainNode.gain.value = 1 + (settings.pitchShift / 200); // Simular pitch shift com gain
+        gainNode.gain.value = 1 + (settings.pitchShift / 200);
         audioNode.connect(gainNode);
         audioNode = gainNode;
       }
 
       // Adicionar ruído se solicitado
       if (settings.addNoise) {
+        console.log('🎧 Adicionando ruído de fundo...');
         const noiseBuffer = offlineContext.createBuffer(numberOfChannels, newLength, sampleRate);
         for (let channel = 0; channel < numberOfChannels; channel++) {
           const channelData = noiseBuffer.getChannelData(channel);
@@ -211,12 +231,23 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
       source.start(0);
 
       // Renderizar áudio
+      console.log('⚙️ Renderizando áudio processado...');
       const renderedBuffer = await offlineContext.startRendering();
+      processedBufferRef.current = renderedBuffer;
       
       // Converter buffer para blob
       const modifiedBlob = await bufferToWavBlob(renderedBuffer);
       
-      // Só chamar onModulatedAudio se não for a aplicação inicial
+      // Atualizar URL do player
+      if (currentAudioUrl) {
+        URL.revokeObjectURL(currentAudioUrl);
+      }
+      const newUrl = URL.createObjectURL(modifiedBlob);
+      setCurrentAudioUrl(newUrl);
+      
+      console.log('✅ Modulação aplicada com sucesso!');
+      
+      // Chamar callback apenas se não for a primeira aplicação
       if (hasAppliedInitialModulation) {
         onModulatedAudio(modifiedBlob);
       } else {
@@ -225,7 +256,7 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
       }
 
     } catch (error) {
-      console.error('Erro ao aplicar modulação de voz:', error);
+      console.error('❌ Erro ao aplicar modulação de voz:', error);
     } finally {
       setIsProcessing(false);
     }
@@ -331,7 +362,7 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
         <div className="flex items-center gap-2 bg-white p-2 rounded-lg">
           <audio 
             ref={audioRef} 
-            src={audioUrl} 
+            src={currentAudioUrl} 
             preload="metadata"
             onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
             onEnded={() => {
@@ -343,16 +374,7 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              const audio = audioRef.current;
-              if (!audio) return;
-              if (isPlaying) {
-                audio.pause();
-              } else {
-                audio.play();
-              }
-              setIsPlaying(!isPlaying);
-            }}
+            onClick={togglePlayPause}
             className="h-8 w-8 p-0"
           >
             {isPlaying ? (
@@ -365,14 +387,7 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              const audio = audioRef.current;
-              if (!audio) return;
-              audio.currentTime = 0;
-              setCurrentTime(0);
-              setIsPlaying(false);
-              audio.pause();
-            }}
+            onClick={restart}
             className="h-8 w-8 p-0"
           >
             <RotateCcw className="h-4 w-4" />
