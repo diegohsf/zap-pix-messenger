@@ -73,10 +73,6 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
               {isLoading ? 'Entrando...' : 'Entrar'}
             </Button>
           </form>
-          <div className="mt-4 text-sm text-gray-600 text-center">
-            <p>Usuário: admin</p>
-            <p>Senha: admin123</p>
-          </div>
         </CardContent>
       </Card>
     </div>

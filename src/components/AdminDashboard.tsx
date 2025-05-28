@@ -205,8 +205,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
                       <TableCell className="font-mono">
                         {message.phone_number}
                       </TableCell>
-                      <TableCell className="max-w-xs truncate">
-                        {message.message_text}
+                      <TableCell className="max-w-lg">
+                        <div className="break-words">
+                          {message.message_text}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
