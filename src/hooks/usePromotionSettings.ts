@@ -19,7 +19,8 @@ export const usePromotionSettings = () => {
 
   const fetchSettings = async () => {
     try {
-      const { data, error } = await supabase
+      // Using any to bypass TypeScript until the table is properly typed
+      const { data, error } = await (supabase as any)
         .from('promotion_settings')
         .select('*')
         .single();
@@ -42,7 +43,8 @@ export const usePromotionSettings = () => {
 
     setIsUpdating(true);
     try {
-      const { error } = await supabase
+      // Using any to bypass TypeScript until the table is properly typed
+      const { error } = await (supabase as any)
         .from('promotion_settings')
         .update({ is_active: isActive })
         .eq('id', settings.id);
