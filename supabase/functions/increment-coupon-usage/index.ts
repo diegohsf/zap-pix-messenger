@@ -18,28 +18,20 @@ Deno.serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-    const { coupon_id, coupon_code } = await req.json()
+    const { coupon_id } = await req.json()
 
-    // Aceitar tanto coupon_id quanto coupon_code
-    if (!coupon_id && !coupon_code) {
-      throw new Error('coupon_id or coupon_code is required')
+    if (!coupon_id) {
+      throw new Error('coupon_id is required')
     }
 
-    let updateQuery = supabase
+    // Incrementar o contador de uso do cupom
+    const { data, error } = await supabase
       .from('discount_coupons')
       .update({ 
         used_count: supabase.raw('used_count + 1'),
         updated_at: new Date().toISOString()
       })
-
-    // Usar o campo apropriado para a busca
-    if (coupon_id) {
-      updateQuery = updateQuery.eq('id', coupon_id)
-    } else {
-      updateQuery = updateQuery.eq('code', coupon_code.toUpperCase())
-    }
-
-    const { data, error } = await updateQuery
+      .eq('id', coupon_id)
       .select()
       .single()
 
@@ -47,8 +39,6 @@ Deno.serve(async (req) => {
       console.error('Error incrementing coupon usage:', error)
       throw error
     }
-
-    console.log('Coupon usage incremented:', data)
 
     return new Response(
       JSON.stringify({ success: true, coupon: data }),

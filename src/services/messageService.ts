@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface MessageData {
@@ -8,7 +7,7 @@ export interface MessageData {
   mediaFileUrl?: string;
   mediaFileName?: string;
   price: number;
-  couponCode?: string | null;
+  couponCode?: string;
   originalPrice?: number;
   discountAmount?: number;
 }
@@ -62,37 +61,6 @@ export const saveMessage = async (data: MessageData): Promise<SavedMessage> => {
 
   console.log('Message saved successfully:', savedMessage);
   return savedMessage;
-};
-
-export const createPixCharge = async (data: {
-  messageId: string;
-  phoneNumber: string;
-  amount: number;
-  description: string;
-}) => {
-  console.log('Creating PIX charge:', data);
-  
-  try {
-    const { data: result, error } = await supabase.functions.invoke('create-pix-charge', {
-      body: {
-        messageId: data.messageId,
-        phoneNumber: data.phoneNumber,
-        amount: data.amount,
-        description: data.description
-      }
-    });
-
-    if (error) {
-      console.error('Error creating PIX charge:', error);
-      throw new Error('Erro ao criar cobrança PIX');
-    }
-
-    console.log('PIX charge created successfully:', result);
-    return result;
-  } catch (error) {
-    console.error('Error in createPixCharge:', error);
-    throw error;
-  }
 };
 
 export const updateMessagePayment = async (
