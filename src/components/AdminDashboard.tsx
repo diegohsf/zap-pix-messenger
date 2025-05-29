@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { SavedMessage } from '@/services/messageService';
-import { LogOut, DollarSign, Clock, CheckCircle, ExternalLink } from 'lucide-react';
+import { LogOut, DollarSign, Clock, CheckCircle, ExternalLink, Zap, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { usePromotionSettings } from '@/hooks/usePromotionSettings';
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -22,6 +24,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     totalRevenue: 0
   });
   const { toast } = useToast();
+  const { settings: promotionSettings, isLoading: promotionLoading, updateSettings } = usePromotionSettings();
 
   const fetchMessages = async () => {
     try {
@@ -108,11 +111,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     );
   };
 
+  const handlePromotionToggle = async (isActive: boolean) => {
+    await updateSettings({ is_active: isActive });
+  };
+
   useEffect(() => {
     fetchMessages();
   }, []);
 
-  if (isLoading) {
+  if (isLoading || promotionLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -136,7 +143,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Arrecadado</CardTitle>
@@ -169,6 +176,32 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">
                 {formatCurrency(stats.totalRevenue)}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Promotion Settings Card */}
+          <Card className={promotionSettings?.is_active ? "border-orange-200 bg-orange-50" : ""}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Promoção</CardTitle>
+              <Zap className={`h-4 w-4 ${promotionSettings?.is_active ? 'text-orange-600' : 'text-gray-400'}`} />
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className={`text-lg font-bold ${promotionSettings?.is_active ? 'text-orange-600' : 'text-gray-600'}`}>
+                    {promotionSettings?.is_active ? 'ATIVA' : 'INATIVA'}
+                  </div>
+                  {promotionSettings?.is_active && (
+                    <div className="text-xs text-orange-600">
+                      {promotionSettings?.discount_percentage}% OFF
+                    </div>
+                  )}
+                </div>
+                <Switch
+                  checked={promotionSettings?.is_active || false}
+                  onCheckedChange={handlePromotionToggle}
+                />
               </div>
             </CardContent>
           </Card>
