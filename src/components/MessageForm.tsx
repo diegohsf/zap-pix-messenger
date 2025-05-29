@@ -1,487 +1,349 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, Video, Image, Phone, MessageSquare, Mic } from 'lucide-react';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Upload, Mic, Video, Image as ImageIcon, FileText, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AudioRecorder from './AudioRecorder';
-import AudioPlayer from './AudioPlayer';
-import FAQ from './FAQ';
-import RecentMessages from './RecentMessages';
 import VoiceModulator from './VoiceModulator';
-
-interface MessageFormProps {
-  onSubmit: (data: MessageData) => void;
-  isSubmitting?: boolean;
-}
+import FAQ from './FAQ';
 
 export interface MessageData {
   phoneNumber: string;
   messageText: string;
-  mediaType: 'none' | 'photo' | 'audio' | 'video';
-  mediaFile: File | null;
-  mediaFileUrl?: string;
-  mediaFileName?: string;
+  mediaType: 'none' | 'image' | 'video' | 'audio' | 'document';
+  mediaFile?: File;
   price: number;
 }
 
-const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = false }) => {
+interface MessageFormProps {
+  onSubmit: (data: MessageData) => void;
+  isSubmitting: boolean;
+}
+
+const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting }) => {
   const [phoneNumber, setPhoneNumber] = useState('');
-  const [message, setMessage] = useState('');
-  const [mediaType, setMediaType] = useState<'none' | 'photo' | 'audio' | 'video'>('none');
+  const [messageText, setMessageText] = useState('');
+  const [mediaType, setMediaType] = useState<'none' | 'image' | 'video' | 'audio' | 'document'>('none');
   const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [price, setPrice] = useState(0);
   const [isRecording, setIsRecording] = useState(false);
-  const [recordedAudio, setRecordedAudio] = useState<{ blob: Blob; duration: number } | null>(null);
-  const [showVoiceModulator, setShowVoiceModulator] = useState(false);
-  const [hasShownInitialModulation, setHasShownInitialModulation] = useState(false);
+  const [recordedAudio, setRecordedAudio] = useState<Blob | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [isVoiceModulatorOpen, setIsVoiceModulatorOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  const formatPhoneNumber = (value: string) => {
-    // Remove tudo que não for número
-    const numbers = value.replace(/\D/g, '');
-    
-    // Limita a 11 dígitos
-    if (numbers.length > 11) return phoneNumber;
-    
-    // Formata como (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
-    if (numbers.length <= 2) return numbers;
-    if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
-    if (numbers.length <= 11) {
-      const ddd = numbers.slice(0, 2);
-      const firstPart = numbers.slice(2, -4);
-      const lastPart = numbers.slice(-4);
-      return `(${ddd}) ${firstPart}-${lastPart}`;
-    }
-    
-    return numbers;
+  const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPhoneNumber(e.target.value);
   };
 
-  const validatePhoneNumber = (phone: string) => {
-    const numbers = phone.replace(/\D/g, '');
-    
-    // Deve ter 10 ou 11 dígitos
-    if (numbers.length !== 10 && numbers.length !== 11) return false;
-    
-    const ddd = parseInt(numbers.slice(0, 2));
-    
-    // Validar se o DDD existe (11 a 99)
-    if (ddd < 11 || ddd > 99) return false;
-    
-    // DDD acima de 30: permite 8 ou 9 dígitos após o DDD
-    if (ddd > 30) {
-      return numbers.length === 10 || numbers.length === 11;
-    }
-    
-    // DDD igual ou abaixo de 30: obrigatório 9 dígitos após o DDD (deve começar com 9)
-    if (ddd <= 30) {
-      return numbers.length === 11 && numbers[2] === '9';
-    }
-    
-    return false;
+  const handleMessageTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessageText(e.target.value);
   };
 
-  const formatPhoneForWebhook = (phone: string) => {
-    // Remove tudo que não for número
-    const numbers = phone.replace(/\D/g, '');
-    // Adiciona o código do país 55 na frente
-    return `55${numbers}`;
+  const handleMediaTypeChange = (value: 'none' | 'image' | 'video' | 'audio' | 'document') => {
+    setMediaType(value);
+    setMediaFile(null); // Reset o arquivo ao mudar o tipo de mídia
   };
 
-  const calculatePrice = () => {
-    switch (mediaType) {
-      case 'video':
-        return 10.00; // R$ 5,00 (base) + R$ 5,00 (vídeo)
-      case 'photo':
-        return 10.00; // R$ 5,00 (base) + R$ 5,00 (foto)
-      case 'audio':
-        return 7.00; // R$ 5,00 (base) + R$ 2,00 (áudio)
-      default:
-        return 5.00; // R$ 5,00 (somente texto)
-    }
-  };
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, type: 'photo' | 'video') => {
-    const file = event.target.files?.[0];
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (file) {
-      console.log(`Arquivo ${type} selecionado:`, file.name, 'Tamanho:', file.size);
       setMediaFile(file);
-      setMediaType(type);
-      // Limpar áudio gravado se houver
-      setRecordedAudio(null);
-      setShowVoiceModulator(false);
-      setHasShownInitialModulation(false);
-      toast({
-        title: "Arquivo selecionado",
-        description: `${type === 'photo' ? 'Foto' : 'Vídeo'} carregado com sucesso!`,
-      });
     }
   };
 
-  const handleAudioRecorded = (audioBlob: Blob, duration: number) => {
-    console.log('=== ÁUDIO GRAVADO ===');
-    console.log('Tamanho do blob:', audioBlob.size, 'bytes');
-    console.log('Duração:', duration, 'segundos');
-    console.log('Tipo MIME do blob:', audioBlob.type);
-    
-    // Criar um arquivo WAV a partir do blob
-    const fileName = `audio_${Date.now()}.wav`;
-    
-    const audioFile = new File([audioBlob], fileName, {
-      type: 'audio/wav',
-    });
-    
-    console.log('Arquivo WAV criado:');
-    console.log('- Nome:', audioFile.name);
-    console.log('- Tipo:', audioFile.type);
-    console.log('- Tamanho:', audioFile.size, 'bytes');
-    
-    setRecordedAudio({ blob: audioBlob, duration });
-    setMediaFile(audioFile);
-    setMediaType('audio');
-    setIsRecording(false);
-    setShowVoiceModulator(true);
-    setHasShownInitialModulation(false); // Reset para novo áudio
-    
-    toast({
-      title: "Áudio gravado",
-      description: `Gravação de ${Math.round(duration)} segundos concluída em WAV!`,
-    });
-  };
+  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Remove tudo que não for número ou ponto
+    const value = e.target.value.replace(/[^0-9.]/g, '');
 
-  const handleModulatedAudio = (modulatedBlob: Blob) => {
-    console.log('=== ÁUDIO MODULADO ===');
-    console.log('Tamanho do blob modulado:', modulatedBlob.size, 'bytes');
-    
-    // Criar arquivo com áudio modulado
-    const fileName = `audio_modulated_${Date.now()}.wav`;
-    const modulatedFile = new File([modulatedBlob], fileName, {
-      type: 'audio/wav',
-    });
-    
-    // Atualizar estado com áudio modulado
-    setMediaFile(modulatedFile);
-    setRecordedAudio(prev => prev ? { ...prev, blob: modulatedBlob } : null);
-    
-    // Só mostrar toast após a primeira modulação
-    if (hasShownInitialModulation) {
-      toast({
-        title: "Voz modulada",
-        description: "Modulação aplicada com sucesso!",
-      });
+    // Permite apenas um ponto
+    const parts = value.split('.');
+    if (parts.length > 2) {
+        // Se houver mais de um ponto, mantém apenas o primeiro
+        setPrice(parseFloat(parts[0] + '.' + parts.slice(1).join('')));
     } else {
-      setHasShownInitialModulation(true);
+        // Converte para float
+        setPrice(value === '' ? 0 : parseFloat(value));
     }
   };
 
-  const handleCancelAudio = () => {
-    console.log('Gravação de áudio cancelada');
-    setIsRecording(false);
+  const handleStartRecording = () => {
+    setIsRecording(true);
     setRecordedAudio(null);
-    setMediaFile(null);
-    setShowVoiceModulator(false);
-    setHasShownInitialModulation(false);
-    if (mediaType === 'audio') {
-      setMediaType('none');
-    }
+    setAudioUrl(null);
   };
 
-  const clearMedia = () => {
-    console.log('Limpando mídia selecionada');
-    setMediaType('none');
-    setMediaFile(null);
-    setRecordedAudio(null);
+  const handleStopRecording = (audioBlob: Blob) => {
     setIsRecording(false);
-    setShowVoiceModulator(false);
-    setHasShownInitialModulation(false);
+    setRecordedAudio(audioBlob);
+    setMediaType('audio');
+    setMediaFile(new File([audioBlob], 'recorded_audio.webm', { type: 'audio/webm' }));
+    setAudioUrl(URL.createObjectURL(audioBlob));
   };
 
-  const handleSubmit = () => {
-    console.log('=== VALIDAÇÃO DO FORMULÁRIO ===');
-    console.log('Número:', phoneNumber);
-    console.log('Mensagem:', message);
-    console.log('Tipo de mídia:', mediaType);
-    console.log('Arquivo de mídia:', mediaFile);
-    console.log('Áudio gravado:', recordedAudio);
+  const handleVoiceModulatorOpen = () => {
+    setIsVoiceModulatorOpen(true);
+  };
 
-    if (!validatePhoneNumber(phoneNumber)) {
+  const handleVoiceModulatorClose = () => {
+    setIsVoiceModulatorOpen(false);
+  };
+
+  const handleVoiceModulation = (modulatedAudioBlob: Blob) => {
+    setRecordedAudio(modulatedAudioBlob);
+    setMediaType('audio');
+    setMediaFile(new File([modulatedAudioBlob], 'modulated_audio.webm', { type: 'audio/webm' }));
+    setAudioUrl(URL.createObjectURL(modulatedAudioBlob));
+    setIsVoiceModulatorOpen(false);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!phoneNumber) {
       toast({
-        title: "Número inválido",
-        description: "Por favor, insira um número de WhatsApp válido. DDD acima de 30 aceita 8 ou 9 dígitos. DDD até 30 deve ter 9 dígitos iniciando com 9.",
+        title: "Número de telefone é obrigatório",
+        description: "Por favor, insira um número de telefone.",
         variant: "destructive",
       });
       return;
     }
 
-    if (!message.trim()) {
+    if (!messageText && mediaType === 'none') {
       toast({
-        title: "Mensagem obrigatória",
-        description: "Por favor, digite uma mensagem.",
+        title: "Mensagem ou mídia é obrigatória",
+        description: "Por favor, escreva uma mensagem ou selecione um tipo de mídia.",
         variant: "destructive",
       });
       return;
     }
 
-    // Validação específica para áudio
-    if (mediaType === 'audio') {
-      if (!mediaFile) {
-        console.error('❌ ERRO: Áudio selecionado mas arquivo não encontrado');
-        toast({
-          title: "Áudio não encontrado",
-          description: "Por favor, grave um áudio antes de enviar.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      if (!recordedAudio) {
-        console.error('❌ ERRO: Arquivo de áudio existe mas dados do blob não encontrados');
-        toast({
-          title: "Dados do áudio perdidos",
-          description: "Por favor, grave o áudio novamente.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      console.log('✅ Validação de áudio passou - arquivo e blob encontrados');
-    }
-
-    // Formatar número para webhook (55 + DDD + número)
-    const formattedPhoneNumber = formatPhoneForWebhook(phoneNumber);
-    console.log('Número formatado para webhook:', formattedPhoneNumber);
-
-    const formData: MessageData = {
-      phoneNumber: formattedPhoneNumber, // Agora envia com código do país
-      messageText: message,
+    const data: MessageData = {
+      phoneNumber,
+      messageText,
       mediaType,
       mediaFile,
-      price: calculatePrice(),
+      price
     };
 
-    console.log('=== DADOS FINAIS PARA ENVIO ===');
-    console.log('Dados do formulário:', formData);
-    console.log('=====================================');
-
-    onSubmit(formData);
+    onSubmit(data);
   };
 
-  // Determinar o texto do botão com base no estado
-  const getButtonText = () => {
-    if (isRecording) return 'Finalize a gravação primeiro';
-    if (isSubmitting) {
-      return mediaFile && mediaType !== 'none' ? 'Enviando arquivo...' : 'Processando...';
+  const handleRemoveMedia = () => {
+    setMediaType('none');
+    setMediaFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
-    return '💬 Enviar Mensagem';
+    if (recordedAudio) {
+      URL.revokeObjectURL(audioUrl || '');
+      setRecordedAudio(null);
+      setAudioUrl(null);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-8 px-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-8 animate-fade-in">
-          <div className="flex items-center justify-center mb-4">
-            <div className="bg-primary p-3 rounded-full">
-              <MessageSquare className="h-8 w-8 text-white" />
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 p-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="flex justify-center mb-4">
+            <img 
+              src="/lovable-uploads/7135a89b-6c23-453a-88fc-205d355d12d8.png" 
+              alt="Zap Elegante" 
+              className="h-16 w-auto"
+            />
           </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Zap Elegante</h1>
-          <p className="text-lg text-gray-600">Envie mensagens no WhatsApp sem se identificar</p>
+          <p className="text-lg text-gray-600">
+            Envie mensagens no WhatsApp sem se identificar
+          </p>
         </div>
 
-        <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm mb-8">
-          <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl text-gray-800 flex items-center justify-center gap-2">
-              <Phone className="h-6 w-6 text-primary" />
-              Envie um WhatsApp sem se identificar
-            </CardTitle>
+        {/* Form Card */}
+        <Card className="shadow-lg rounded-lg">
+          <CardHeader>
+            <CardTitle>Nova Mensagem</CardTitle>
           </CardHeader>
-
-          <CardContent className="space-y-6">
-            <Alert className="border-orange-200 bg-orange-50">
-              <AlertDescription className="text-orange-800">
-                <strong>Atenção:</strong> Se você digitar o número de telefone errado, a 
-                mensagem <strong>não será entregue</strong> e <strong>não haverá reembolso</strong>.
-              </AlertDescription>
-            </Alert>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                Lembre-se do DDD
-              </label>
-              <p className="text-xs text-gray-600">
-                Sempre inclua o <strong>DDD</strong> do número antes de enviar a mensagem.
-              </p>
-              <div className="relative">
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <Label htmlFor="phoneNumber">Número do destinatário</Label>
                 <Input
-                  placeholder="(11) 99999-9999"
+                  type="tel"
+                  id="phoneNumber"
+                  placeholder="Digite o número com DDD"
                   value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(formatPhoneNumber(e.target.value))}
-                  className="pl-10 text-lg h-12"
+                  onChange={handlePhoneNumberChange}
                   disabled={isSubmitting}
-                  inputMode="numeric"
+                  required
                 />
-                <Phone className="absolute left-3 top-3 h-6 w-6 text-gray-400" />
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Mensagem</label>
-              <Textarea
-                placeholder="Digite sua mensagem..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                className="min-h-24 text-base"
-                maxLength={1000}
-                disabled={isSubmitting}
-              />
-              <div className="text-xs text-gray-500 text-right">
-                {message.length}/1000 caracteres
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <label className="text-sm font-medium text-gray-700">
-                Anexos (opcional)
-              </label>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div className="relative">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => handleFileUpload(e, 'photo')}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    id="photo-upload"
-                    disabled={isSubmitting || isRecording}
-                  />
-                  <Button
-                    variant="outline"
-                    className="w-full h-20 flex flex-col items-center justify-center gap-2 hover:bg-green-50 border-2 border-dashed"
-                    type="button"
-                    disabled={isSubmitting || isRecording}
-                  >
-                    <Image className="h-6 w-6" />
-                    <span className="text-xs">Enviar Foto</span>
-                    <span className="text-xs text-green-600 font-semibold">+ R$ 5,00</span>
-                  </Button>
-                </div>
-
-                <AudioRecorder
-                  onAudioRecorded={handleAudioRecorded}
-                  onCancel={handleCancelAudio}
-                  isRecording={isRecording}
-                  onStartRecording={() => setIsRecording(true)}
-                  onStopRecording={() => setIsRecording(false)}
+              <div>
+                <Label htmlFor="messageText">Mensagem</Label>
+                <Textarea
+                  id="messageText"
+                  placeholder="Digite sua mensagem..."
+                  value={messageText}
+                  onChange={handleMessageTextChange}
+                  rows={4}
+                  disabled={isSubmitting}
                 />
+              </div>
 
-                <div className="relative">
-                  <input
-                    type="file"
-                    accept="video/*"
-                    onChange={(e) => handleFileUpload(e, 'video')}
-                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    id="video-upload"
-                    disabled={isSubmitting || isRecording}
-                  />
-                  <Button
-                    variant="outline"
-                    className="w-full h-20 flex flex-col items-center justify-center gap-2 hover:bg-blue-50 border-2 border-dashed"
-                    type="button"
-                    disabled={isSubmitting || isRecording}
-                  >
-                    <Video className="h-6 w-6" />
-                    <span className="text-xs">Enviar Vídeo</span>
-                    <span className="text-xs text-blue-600 font-semibold">+ R$ 5,00</span>
-                  </Button>
-                </div>
+              <div>
+                <Label>Tipo de mídia</Label>
+                <RadioGroup defaultValue={mediaType} onValueChange={handleMediaTypeChange} className="flex flex-col space-y-1">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="none" id="media-none" disabled={isSubmitting} />
+                    <Label htmlFor="media-none">Nenhuma</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="image" id="media-image" disabled={isSubmitting} />
+                    <Label htmlFor="media-image">Imagem</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="video" id="media-video" disabled={isSubmitting} />
+                    <Label htmlFor="media-video">Vídeo</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="audio" id="media-audio" disabled={isSubmitting} />
+                    <Label htmlFor="media-audio">Áudio</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="document" id="media-document" disabled={isSubmitting} />
+                    <Label htmlFor="media-document">Documento</Label>
+                  </div>
+                </RadioGroup>
               </div>
 
               {mediaType !== 'none' && (
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    {mediaType === 'photo' && <Image className="h-5 w-5 text-green-600" />}
-                    {mediaType === 'audio' && (
-                      <div className="flex items-center gap-2">
-                        <Mic className="h-5 w-5 text-green-600" />
-                        {recordedAudio && (
-                          <span className="text-xs text-green-700">
-                            ({Math.floor(recordedAudio.duration)}s)
-                          </span>
+                <div>
+                  <Label htmlFor="mediaFile">
+                    {mediaType === 'audio' ? 'Áudio' : 'Arquivo de mídia'}
+                  </Label>
+                  {mediaType === 'audio' && !recordedAudio ? (
+                    <>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleStartRecording}
+                          disabled={isSubmitting || isRecording}
+                        >
+                          {isRecording ? (
+                            <>
+                              Gravando...
+                              <span className="animate-pulse text-red-500">●</span>
+                            </>
+                          ) : (
+                            <>
+                              <Mic className="mr-2 h-4 w-4" />
+                              Gravar Áudio
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={handleVoiceModulatorOpen}
+                          disabled={isSubmitting || isRecording}
+                        >
+                          Modulador de Voz
+                        </Button>
+                      </div>
+                      <AudioRecorder
+                        isRecording={isRecording}
+                        onStop={handleStopRecording}
+                      />
+                      <VoiceModulator
+                        isOpen={isVoiceModulatorOpen}
+                        onClose={handleVoiceModulatorClose}
+                        onVoiceModulation={handleVoiceModulation}
+                        recordedAudio={recordedAudio}
+                      />
+                    </>
+                  ) : (
+                    <>
+                      <div className="relative border rounded-md p-2 flex items-center justify-between">
+                        <label
+                          htmlFor="mediaFile"
+                          className="cursor-pointer py-2 px-4 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 disabled:cursor-not-allowed data-[disabled]:opacity-50"
+                        >
+                          <div className="flex items-center">
+                            {mediaType === 'image' && <ImageIcon className="mr-2 h-4 w-4" />}
+                            {mediaType === 'video' && <Video className="mr-2 h-4 w-4" />}
+                            {mediaType === 'audio' && <Mic className="mr-2 h-4 w-4" />}
+                            {mediaType === 'document' && <FileText className="mr-2 h-4 w-4" />}
+                            <span>
+                              {mediaFile ? mediaFile.name : `Selecionar ${mediaType === 'audio' ? 'áudio' : 'arquivo'}`}
+                            </span>
+                          </div>
+                        </label>
+                        <Input
+                          type="file"
+                          id="mediaFile"
+                          className="hidden"
+                          onChange={handleFileChange}
+                          disabled={isSubmitting}
+                          accept={
+                            mediaType === 'image'
+                              ? 'image/*'
+                              : mediaType === 'video'
+                                ? 'video/*'
+                                : mediaType === 'audio'
+                                  ? 'audio/*'
+                                  : '*'
+                          }
+                          ref={fileInputRef}
+                        />
+                        {mediaFile && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={handleRemoveMedia}
+                            disabled={isSubmitting}
+                            className="absolute top-1 right-1"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
                         )}
                       </div>
-                    )}
-                    {mediaType === 'video' && <Video className="h-5 w-5 text-green-600" />}
-                    <span className="text-sm text-green-800 capitalize">
-                      {mediaType === 'photo' ? 'Foto' : 
-                       mediaType === 'audio' ? 'Áudio' : 
-                       'Vídeo'} selecionado
-                    </span>
-                    {mediaFile && (
-                      <span className="text-xs text-green-600">
-                        ({(mediaFile.size / 1024 / 1024).toFixed(1)} MB)
-                      </span>
-                    )}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearMedia}
-                    className="text-red-600 hover:text-red-800"
-                    disabled={isSubmitting}
-                  >
-                    Remover
-                  </Button>
-                </div>
-              )}
-
-              {mediaType === 'audio' && recordedAudio && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Prévia do áudio gravado:</label>
-                  <AudioPlayer audioBlob={recordedAudio.blob} duration={recordedAudio.duration} />
-                  
-                  {showVoiceModulator && (
-                    <VoiceModulator
-                      audioBlob={recordedAudio.blob}
-                      duration={recordedAudio.duration}
-                      onModulatedAudio={handleModulatedAudio}
-                    />
+                      {recordedAudio && mediaType === 'audio' && (
+                        <audio src={audioUrl} controls className="mt-2 w-full"></audio>
+                      )}
+                    </>
                   )}
                 </div>
               )}
-            </div>
 
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-700">
-                  Preço por mensagem:
-                </span>
-                <Badge variant="secondary" className="text-lg font-bold px-3 py-1">
-                  R$ {calculatePrice().toFixed(2)}
-                </Badge>
+              <div>
+                <Label htmlFor="price">Valor (R$)</Label>
+                <Input
+                  type="number"
+                  id="price"
+                  placeholder="Digite o valor"
+                  value={price.toString()}
+                  onChange={handlePriceChange}
+                  disabled={isSubmitting}
+                  step="0.01"
+                />
               </div>
-              <p className="text-xs text-gray-600 mt-2">
-                Ao enviar uma mensagem, você concorda com nossos Termos e Condições 
-                e a Política de Privacidade.
-              </p>
-            </div>
 
-            <Button
-              onClick={handleSubmit}
-              disabled={isSubmitting || isRecording}
-              className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary-hover"
-            >
-              {getButtonText()}
-            </Button>
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? 'Enviando...' : 'Enviar Mensagem'}
+              </Button>
+            </form>
           </CardContent>
         </Card>
 
         <FAQ />
-        
-        <div className="mt-8">
-          <RecentMessages />
-        </div>
       </div>
     </div>
   );
