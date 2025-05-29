@@ -16,39 +16,39 @@ const ConfirmationPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const loadMessageData = async () => {
-      if (!transactionId) {
-        setError('ID da transação não encontrado');
+  const loadMessageData = async () => {
+    if (!transactionId) {
+      setError('ID da transação não encontrado');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      console.log('Loading message data for transaction:', transactionId);
+      const message = await getMessageByTransactionId(transactionId);
+      
+      if (!message) {
+        setError('Transação não encontrada');
         setIsLoading(false);
         return;
       }
 
-      try {
-        console.log('Loading message data for transaction:', transactionId);
-        const message = await getMessageByTransactionId(transactionId);
-        
-        if (!message) {
-          setError('Transação não encontrada');
-          setIsLoading(false);
-          return;
-        }
+      console.log('Message data loaded:', message);
+      setMessageData(message);
 
-        console.log('Message data loaded:', message);
-        setMessageData(message);
+      // Gerar URL de compartilhamento
+      const currentUrl = window.location.href;
+      setShareUrl(currentUrl);
 
-        // Gerar URL de compartilhamento
-        const currentUrl = window.location.href;
-        setShareUrl(currentUrl);
+    } catch (error) {
+      console.error('Error loading message data:', error);
+      setError('Erro ao carregar dados da transação');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-      } catch (error) {
-        console.error('Error loading message data:', error);
-        setError('Erro ao carregar dados da transação');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
+  useEffect(() => {
     loadMessageData();
   }, [transactionId]);
 
@@ -222,7 +222,7 @@ const ConfirmationPage: React.FC = () => {
             Pagamento Confirmado!
           </h1>
           <p className="text-lg text-gray-600">
-            Sua mensagem foi processada com sucesso
+            Sua mensagem foi enviada com sucesso
           </p>
         </div>
 
@@ -280,7 +280,7 @@ const ConfirmationPage: React.FC = () => {
                 <li>• Em breve ela será entregue no WhatsApp: {messageData.phone_number}</li>
                 <li>• Você pode compartilhar esta confirmação</li>
                 {messageData.media_file_url && (
-                  <li>• Arquivo de mídia foi processado com sucesso</li>
+                  <li>• Arquivo de mídia foi enviado com sucesso</li>
                 )}
               </ul>
             </div>
