@@ -2,17 +2,29 @@
 import { useState } from 'react';
 import { validateCoupon, CouponValidationResult } from '@/services/couponService';
 import { useToast } from '@/hooks/use-toast';
+import { usePromotionSettings } from '@/hooks/usePromotionSettings';
 
 export const useCouponValidation = () => {
   const [appliedCoupon, setAppliedCoupon] = useState<CouponValidationResult | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   const { toast } = useToast();
+  const { settings: promotionSettings } = usePromotionSettings();
 
   const validateAndApplyCoupon = async (code: string, orderValue: number): Promise<boolean> => {
     if (!code.trim()) {
       toast({
         title: "Erro",
         description: "Digite um código de cupom",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    // Verificar se as promoções estão ativadas
+    if (promotionSettings?.is_active) {
+      toast({
+        title: "Cupom não disponível",
+        description: "Não é possível usar cupons enquanto a promoção está ativa. Aproveite os descontos promocionais!",
         variant: "destructive",
       });
       return false;
@@ -84,5 +96,6 @@ export const useCouponValidation = () => {
     validateAndApplyCoupon,
     removeCoupon,
     calculateFinalPrice,
+    isPromotionActive: promotionSettings?.is_active || false,
   };
 };
