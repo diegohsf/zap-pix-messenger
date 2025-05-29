@@ -34,7 +34,7 @@ export const getAllCoupons = async (): Promise<DiscountCoupon[]> => {
     throw new Error('Erro ao buscar cupons');
   }
 
-  return data || [];
+  return (data || []) as DiscountCoupon[];
 };
 
 export const createCoupon = async (couponData: Omit<DiscountCoupon, 'id' | 'used_count' | 'created_at' | 'updated_at'>): Promise<DiscountCoupon> => {
@@ -49,7 +49,7 @@ export const createCoupon = async (couponData: Omit<DiscountCoupon, 'id' | 'used
     throw new Error('Erro ao criar cupom');
   }
 
-  return data;
+  return data as DiscountCoupon;
 };
 
 export const updateCoupon = async (id: string, updates: Partial<DiscountCoupon>): Promise<DiscountCoupon> => {
@@ -65,7 +65,7 @@ export const updateCoupon = async (id: string, updates: Partial<DiscountCoupon>)
     throw new Error('Erro ao atualizar cupom');
   }
 
-  return data;
+  return data as DiscountCoupon;
 };
 
 export const deleteCoupon = async (id: string): Promise<void> => {
@@ -96,47 +96,50 @@ export const validateCoupon = async (code: string, orderValue: number): Promise<
     return { isValid: false, error: 'Cupom não encontrado ou inativo' };
   }
 
+  const typedCoupon = coupon as DiscountCoupon;
+
   // Verificar se o cupom ainda é válido por data
   const now = new Date();
-  if (coupon.valid_from && new Date(coupon.valid_from) > now) {
+  if (typedCoupon.valid_from && new Date(typedCoupon.valid_from) > now) {
     return { isValid: false, error: 'Cupom ainda não está válido' };
   }
 
-  if (coupon.valid_until && new Date(coupon.valid_until) < now) {
+  if (typedCoupon.valid_until && new Date(typedCoupon.valid_until) < now) {
     return { isValid: false, error: 'Cupom expirado' };
   }
 
   // Verificar limite de uso
-  if (coupon.usage_limit && coupon.used_count >= coupon.usage_limit) {
+  if (typedCoupon.usage_limit && typedCoupon.used_count >= typedCoupon.usage_limit) {
     return { isValid: false, error: 'Cupom esgotado' };
   }
 
   // Verificar valor mínimo do pedido
-  if (orderValue < coupon.min_order_value) {
+  if (orderValue < typedCoupon.min_order_value) {
     return { 
       isValid: false, 
-      error: `Valor mínimo do pedido deve ser R$ ${coupon.min_order_value.toFixed(2)}` 
+      error: `Valor mínimo do pedido deve ser R$ ${typedCoupon.min_order_value.toFixed(2)}` 
     };
   }
 
   // Calcular desconto
   let discountAmount = 0;
-  if (coupon.discount_type === 'percentage') {
-    discountAmount = (orderValue * coupon.discount_value) / 100;
+  if (typedCoupon.discount_type === 'percentage') {
+    discountAmount = (orderValue * typedCoupon.discount_value) / 100;
   } else {
-    discountAmount = Math.min(coupon.discount_value, orderValue);
+    discountAmount = Math.min(typedCoupon.discount_value, orderValue);
   }
 
   return {
     isValid: true,
-    coupon,
+    coupon: typedCoupon,
     discountAmount
   };
 };
 
 export const incrementCouponUsage = async (couponId: string): Promise<void> => {
-  const { error } = await supabase
-    .rpc('increment_coupon_usage', { coupon_id: couponId });
+  const { error } = await supabase.functions.invoke('increment-coupon-usage', {
+    body: { coupon_id: couponId }
+  });
 
   if (error) {
     console.error('Error incrementing coupon usage:', error);

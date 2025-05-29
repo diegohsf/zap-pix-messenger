@@ -29,6 +29,9 @@ export interface SavedMessage {
   updated_at: string;
   paid_at?: string;
   sent_at?: string;
+  coupon_code?: string;
+  original_price?: number;
+  discount_amount?: number;
 }
 
 export const saveMessage = async (data: MessageData): Promise<SavedMessage> => {

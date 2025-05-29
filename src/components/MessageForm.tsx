@@ -30,6 +30,9 @@ export interface MessageData {
   mediaFileUrl?: string;
   mediaFileName?: string;
   price: number;
+  couponCode?: string;
+  originalPrice?: number;
+  discountAmount?: number;
 }
 
 const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = false }) => {
@@ -310,8 +313,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
       mediaType,
       mediaFile,
       price: priceCalculation.finalPrice,
-      // Adicionar dados do cupom se aplicado
-      couponCode: appliedCoupon?.coupon?.code || null,
+      couponCode: appliedCoupon?.coupon?.code || undefined,
       originalPrice: priceCalculation.originalPrice,
       discountAmount: priceCalculation.discountAmount,
     };
