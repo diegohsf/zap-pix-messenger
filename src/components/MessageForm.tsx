@@ -12,7 +12,6 @@ import AudioPlayer from './AudioPlayer';
 import FAQ from './FAQ';
 import RecentMessages from './RecentMessages';
 import VoiceModulator from './VoiceModulator';
-import { usePromotionSettings } from '@/hooks/usePromotionSettings';
 
 interface MessageFormProps {
   onSubmit: (data: MessageData) => void;
@@ -39,11 +38,15 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
   const [showVoiceModulator, setShowVoiceModulator] = useState(false);
   const [hasShownInitialModulation, setHasShownInitialModulation] = useState(false);
   const { toast } = useToast();
-  const { settings: promotionSettings } = usePromotionSettings();
 
   const formatPhoneNumber = (value: string) => {
+    // Remove tudo que não for número
     const numbers = value.replace(/\D/g, '');
+    
+    // Limita a 11 dígitos
     if (numbers.length > 11) return phoneNumber;
+    
+    // Formata como (XX) XXXXX-XXXX ou (XX) XXXX-XXXX
     if (numbers.length <= 2) return numbers;
     if (numbers.length <= 7) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
     if (numbers.length <= 11) {
@@ -52,87 +55,52 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
       const lastPart = numbers.slice(-4);
       return `(${ddd}) ${firstPart}-${lastPart}`;
     }
+    
     return numbers;
   };
 
   const validatePhoneNumber = (phone: string) => {
     const numbers = phone.replace(/\D/g, '');
+    
+    // Deve ter 10 ou 11 dígitos
     if (numbers.length !== 10 && numbers.length !== 11) return false;
+    
     const ddd = parseInt(numbers.slice(0, 2));
+    
+    // Validar se o DDD existe (11 a 99)
     if (ddd < 11 || ddd > 99) return false;
+    
+    // DDD acima de 30: permite 8 ou 9 dígitos após o DDD
     if (ddd > 30) {
       return numbers.length === 10 || numbers.length === 11;
     }
+    
+    // DDD igual ou abaixo de 30: obrigatório 9 dígitos após o DDD (deve começar com 9)
     if (ddd <= 30) {
       return numbers.length === 11 && numbers[2] === '9';
     }
+    
     return false;
   };
 
   const formatPhoneForWebhook = (phone: string) => {
+    // Remove tudo que não for número
     const numbers = phone.replace(/\D/g, '');
+    // Adiciona o código do país 55 na frente
     return `55${numbers}`;
   };
 
   const calculatePrice = () => {
-    const basePrice = 5.00;
-    const isPromotionActive = promotionSettings?.is_active || false;
-    const discountPercentage = promotionSettings?.discount_percentage || 50;
-    
     switch (mediaType) {
       case 'video':
+        return 10.00; // R$ 5,00 (base) + R$ 5,00 (vídeo)
       case 'photo':
-        const mediaPrice = 5.00;
-        const finalMediaPrice = isPromotionActive ? mediaPrice * (1 - discountPercentage / 100) : mediaPrice;
-        return basePrice + finalMediaPrice;
+        return 10.00; // R$ 5,00 (base) + R$ 5,00 (foto)
       case 'audio':
-        const audioPrice = 2.00;
-        const finalAudioPrice = isPromotionActive ? audioPrice * (1 - discountPercentage / 100) : audioPrice;
-        return basePrice + finalAudioPrice;
+        return 7.00; // R$ 5,00 (base) + R$ 2,00 (áudio)
       default:
-        return basePrice;
+        return 5.00; // R$ 5,00 (somente texto)
     }
-  };
-
-  const getMediaPriceDisplay = (type: 'photo' | 'audio' | 'video') => {
-    const isPromotionActive = promotionSettings?.is_active || false;
-    const discountPercentage = promotionSettings?.discount_percentage || 50;
-    
-    let originalPrice = 0;
-    switch (type) {
-      case 'photo':
-      case 'video':
-        originalPrice = 5.00;
-        break;
-      case 'audio':
-        originalPrice = 2.00;
-        break;
-    }
-    
-    if (isPromotionActive) {
-      const discountedPrice = originalPrice * (1 - discountPercentage / 100);
-      return (
-        <div className="flex flex-col items-center gap-1">
-          <span className="text-xs text-red-600 font-semibold">
-            -{discountPercentage}% OFF
-          </span>
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-gray-400 line-through">
-              R$ {originalPrice.toFixed(2)}
-            </span>
-            <span className="text-xs text-green-600 font-semibold">
-              R$ {discountedPrice.toFixed(2)}
-            </span>
-          </div>
-        </div>
-      );
-    }
-    
-    return (
-      <span className="text-xs text-green-600 font-semibold">
-        + R$ {originalPrice.toFixed(2)}
-      </span>
-    );
   };
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>, type: 'photo' | 'video') => {
@@ -141,6 +109,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
       console.log(`Arquivo ${type} selecionado:`, file.name, 'Tamanho:', file.size);
       setMediaFile(file);
       setMediaType(type);
+      // Limpar áudio gravado se houver
       setRecordedAudio(null);
       setShowVoiceModulator(false);
       setHasShownInitialModulation(false);
@@ -157,7 +126,9 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     console.log('Duração:', duration, 'segundos');
     console.log('Tipo MIME do blob:', audioBlob.type);
     
+    // Criar um arquivo WAV a partir do blob
     const fileName = `audio_${Date.now()}.wav`;
+    
     const audioFile = new File([audioBlob], fileName, {
       type: 'audio/wav',
     });
@@ -172,7 +143,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     setMediaType('audio');
     setIsRecording(false);
     setShowVoiceModulator(true);
-    setHasShownInitialModulation(false);
+    setHasShownInitialModulation(false); // Reset para novo áudio
     
     toast({
       title: "Áudio gravado",
@@ -184,14 +155,17 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     console.log('=== ÁUDIO MODULADO ===');
     console.log('Tamanho do blob modulado:', modulatedBlob.size, 'bytes');
     
+    // Criar arquivo com áudio modulado
     const fileName = `audio_modulated_${Date.now()}.wav`;
     const modulatedFile = new File([modulatedBlob], fileName, {
       type: 'audio/wav',
     });
     
+    // Atualizar estado com áudio modulado
     setMediaFile(modulatedFile);
     setRecordedAudio(prev => prev ? { ...prev, blob: modulatedBlob } : null);
     
+    // Só mostrar toast após a primeira modulação
     if (hasShownInitialModulation) {
       toast({
         title: "Voz modulada",
@@ -250,6 +224,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
       return;
     }
 
+    // Validação específica para áudio
     if (mediaType === 'audio') {
       if (!mediaFile) {
         console.error('❌ ERRO: Áudio selecionado mas arquivo não encontrado');
@@ -274,11 +249,12 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
       console.log('✅ Validação de áudio passou - arquivo e blob encontrados');
     }
 
+    // Formatar número para webhook (55 + DDD + número)
     const formattedPhoneNumber = formatPhoneForWebhook(phoneNumber);
     console.log('Número formatado para webhook:', formattedPhoneNumber);
 
     const formData: MessageData = {
-      phoneNumber: formattedPhoneNumber,
+      phoneNumber: formattedPhoneNumber, // Agora envia com código do país
       messageText: message,
       mediaType,
       mediaFile,
@@ -292,6 +268,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     onSubmit(formData);
   };
 
+  // Determinar o texto do botão com base no estado
   const getButtonText = () => {
     if (isRecording) return 'Finalize a gravação primeiro';
     if (isSubmitting) {
@@ -311,14 +288,6 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
           </div>
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Zap Elegante</h1>
           <p className="text-lg text-gray-600">Envie mensagens no WhatsApp sem se identificar</p>
-          
-          {promotionSettings?.is_active && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-600 font-semibold text-sm">
-                🎉 PROMOÇÃO ATIVA: 50% OFF em anexos (foto, áudio e vídeo)!
-              </p>
-            </div>
-          )}
         </div>
 
         <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm mb-8">
@@ -395,7 +364,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   >
                     <Image className="h-6 w-6" />
                     <span className="text-xs">Enviar Foto</span>
-                    {getMediaPriceDisplay('photo')}
+                    <span className="text-xs text-green-600 font-semibold">+ R$ 5,00</span>
                   </Button>
                 </div>
 
@@ -405,7 +374,6 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   isRecording={isRecording}
                   onStartRecording={() => setIsRecording(true)}
                   onStopRecording={() => setIsRecording(false)}
-                  promotionPrice={getMediaPriceDisplay('audio')}
                 />
 
                 <div className="relative">
@@ -425,7 +393,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   >
                     <Video className="h-6 w-6" />
                     <span className="text-xs">Enviar Vídeo</span>
-                    {getMediaPriceDisplay('video')}
+                    <span className="text-xs text-blue-600 font-semibold">+ R$ 5,00</span>
                   </Button>
                 </div>
               </div>
@@ -493,11 +461,6 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   R$ {calculatePrice().toFixed(2)}
                 </Badge>
               </div>
-              {promotionSettings?.is_active && mediaType !== 'none' && (
-                <p className="text-xs text-green-600 mt-1 font-medium">
-                  ✅ Desconto de 50% aplicado no anexo!
-                </p>
-              )}
               <p className="text-xs text-gray-600 mt-2">
                 Ao enviar uma mensagem, você concorda com nossos Termos e Condições 
                 e a Política de Privacidade.

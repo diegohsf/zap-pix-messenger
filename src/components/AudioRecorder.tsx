@@ -10,7 +10,6 @@ interface AudioRecorderProps {
   isRecording: boolean;
   onStartRecording: () => void;
   onStopRecording: () => void;
-  promotionPrice?: React.ReactNode;
 }
 
 const AudioRecorder: React.FC<AudioRecorderProps> = ({
@@ -19,7 +18,6 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
   isRecording,
   onStartRecording,
   onStopRecording,
-  promotionPrice,
 }) => {
   const {
     startRecording,
@@ -75,9 +73,7 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
     >
       <Mic className="h-6 w-6" />
       <span className="text-xs">Gravar Áudio</span>
-      {promotionPrice || (
-        <span className="text-xs text-orange-600 font-semibold">+ R$ 2,00</span>
-      )}
+      <span className="text-xs text-orange-600 font-semibold">+ R$ 2,00</span>
     </Button>
   );
 };

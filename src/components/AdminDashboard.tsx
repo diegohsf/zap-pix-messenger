@@ -1,14 +1,13 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { supabase } from '@/integrations/supabase/client';
 import { SavedMessage } from '@/services/messageService';
-import { LogOut, DollarSign, Clock, CheckCircle, ExternalLink, Percent } from 'lucide-react';
+import { LogOut, DollarSign, Clock, CheckCircle, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { usePromotionSettings } from '@/hooks/usePromotionSettings';
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -23,7 +22,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     totalRevenue: 0
   });
   const { toast } = useToast();
-  const { settings: promotionSettings, isLoading: isLoadingPromotion, isUpdating, updatePromotionStatus } = usePromotionSettings();
 
   const fetchMessages = async () => {
     try {
@@ -136,44 +134,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
             Sair
           </Button>
         </div>
-
-        {/* Promotion Control */}
-        <Card className="mb-6">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium flex items-center gap-2">
-              <Percent className="h-5 w-5 text-orange-600" />
-              Controle de Promoção
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-700">
-                  Promoção 50% OFF em anexos
-                </p>
-                <p className="text-xs text-gray-600">
-                  {promotionSettings?.is_active 
-                    ? "Desconto ativo: Foto, Áudio e Vídeo com 50% OFF" 
-                    : "Promoção desativada"}
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                {isLoadingPromotion ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-400"></div>
-                ) : (
-                  <Switch
-                    checked={promotionSettings?.is_active || false}
-                    onCheckedChange={updatePromotionStatus}
-                    disabled={isUpdating}
-                  />
-                )}
-                <span className="text-sm font-medium">
-                  {promotionSettings?.is_active ? "ATIVO" : "INATIVO"}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
