@@ -1,16 +1,16 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import MessageForm from '@/components/MessageForm';
+import MessageForm, { MessageData } from '@/components/MessageForm';
 import PaymentModal from '@/components/PaymentModal';
 import Footer from '@/components/Footer';
 import { saveMessage } from '@/services/messageService';
 import { uploadFile } from '@/services/fileUploadService';
 import { useToast } from '@/hooks/use-toast';
-import { MessageData } from '@/types/messageTypes';
 
 const Index: React.FC = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [currentMessageId, setCurrentMessageId] = useState<string | null>(null);
   const [currentMessageData, setCurrentMessageData] = useState<MessageData | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -62,7 +62,8 @@ const Index: React.FC = () => {
       const savedMessage = await saveMessage(messageData);
       console.log('✅ Mensagem salva:', savedMessage);
       
-      // Armazenar dados da mensagem
+      // Armazenar ID da mensagem e dados
+      setCurrentMessageId(savedMessage.id);
       setCurrentMessageData(data);
       
       toast({
@@ -93,8 +94,17 @@ const Index: React.FC = () => {
     }
   };
 
+  const handlePaymentConfirmed = (transactionId: string) => {
+    console.log('Pagamento confirmado:', transactionId);
+    
+    // Redirecionar para a página de confirmação
+    setShowPaymentModal(false);
+    navigate(`/confirmacao/${transactionId}`);
+  };
+
   const handleClosePaymentModal = () => {
     setShowPaymentModal(false);
+    setCurrentMessageId(null);
     setCurrentMessageData(null);
   };
 
@@ -107,17 +117,13 @@ const Index: React.FC = () => {
         />
       </div>
       <Footer />
-      {currentMessageData && (
-        <PaymentModal
-          isOpen={showPaymentModal}
-          messageData={currentMessageData}
-          pixCode={null}
-          qrCodeUrl={null}
-          isPaid={false}
-          transactionId={null}
-          onClose={handleClosePaymentModal}
-        />
-      )}
+      <PaymentModal
+        isOpen={showPaymentModal}
+        messageId={currentMessageId}
+        messageData={currentMessageData}
+        onPaymentConfirmed={handlePaymentConfirmed}
+        onClose={handleClosePaymentModal}
+      />
     </div>
   );
 };

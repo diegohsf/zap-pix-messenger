@@ -15,11 +15,23 @@ import VoiceModulator from './VoiceModulator';
 import PromotionBanner from './PromotionBanner';
 import { usePromotionSettings } from '@/hooks/usePromotionSettings';
 import { useCouponValidation } from '@/hooks/useCouponValidation';
-import { MessageData } from '@/types/messageTypes';
 
 interface MessageFormProps {
   onSubmit: (data: MessageData) => void;
   isSubmitting?: boolean;
+}
+
+export interface MessageData {
+  phoneNumber: string;
+  messageText: string;
+  mediaType: 'none' | 'photo' | 'audio' | 'video';
+  mediaFile: File | null;
+  mediaFileUrl?: string;
+  mediaFileName?: string;
+  price: number;
+  couponCode?: string;
+  originalPrice?: number;
+  discountAmount?: number;
 }
 
 const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = false }) => {
@@ -671,4 +683,3 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
 };
 
 export default MessageForm;
-export type { MessageData };
