@@ -1,44 +1,15 @@
+
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Switch } from '@/components/ui/switch';
-import { Slider } from '@/components/ui/slider';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from "@/components/ui/progress"
-import { Separator } from "@/components/ui/separator"
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select"
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger,
-  DialogClose
-} from "@/components/ui/dialog"
-import { 
-  ArrowDownToLine, 
-  Image, 
-  AudioLines, 
-  Video, 
-  X, 
-  Scissors,
-  CheckCircle2,
-  AlertTriangle
-} from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { saveMessage, createPixCharge } from '@/services/messageService';
-import { uploadFile } from '@/integrations/supabase/storage';
+import { Separator } from "@/components/ui/separator";
+import { Image, AudioLines, Video, X } from 'lucide-react';
+import { saveMessage } from '@/services/messageService';
+import { uploadFile } from '@/services/fileUploadService';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { usePromotionSettings } from '@/hooks/usePromotionSettings';
@@ -188,7 +159,7 @@ const MessageForm: React.FC = () => {
       if (hasMedia) {
         const file = imageFile || audioFile || videoFile;
         if (file) {
-          const uploadResult = await uploadFile(file, mediaType);
+          const uploadResult = await uploadFile(file, mediaType as 'photo' | 'audio' | 'video');
           mediaFileUrl = uploadResult.url;
           mediaFileName = uploadResult.fileName;
         }
@@ -196,28 +167,19 @@ const MessageForm: React.FC = () => {
 
       // Salvar mensagem no banco
       const messageData = {
-        phone_number: phoneNumber.replace(/\D/g, ''),
-        message_text: messageText,
-        media_type: mediaType,
-        media_file_url: mediaFileUrl,
-        media_file_name: mediaFileName,
+        phoneNumber: phoneNumber.replace(/\D/g, ''),
+        messageText: messageText,
+        mediaType: mediaType as 'none' | 'photo' | 'audio' | 'video',
+        mediaFileUrl: mediaFileUrl,
+        mediaFileName: mediaFileName,
         price: finalPrice,
-        original_price: originalPrice > finalPrice ? originalPrice : null,
-        discount_amount: discountAmount,
-        coupon_code: couponCode,
-        status: 'pending_payment'
+        originalPrice: originalPrice > finalPrice ? originalPrice : undefined,
+        discountAmount: discountAmount,
+        couponCode: couponCode
       };
 
       const savedMessage = await saveMessage(messageData);
       
-      // Criar cobrança PIX
-      const pixData = await createPixCharge({
-        messageId: savedMessage.id,
-        phoneNumber: messageData.phone_number,
-        amount: finalPrice,
-        description: `Zap Elegante - Mensagem ${hasMedia ? `com ${mediaType}` : 'sem mídia'}`
-      });
-
       // Confirmar uso do cupom após pagamento bem-sucedido ser criado
       if (appliedCoupon?.isValid && !promotionSettings?.is_active) {
         await confirmCouponUsage();
@@ -226,9 +188,7 @@ const MessageForm: React.FC = () => {
       // Redirecionar para página de confirmação
       navigate('/confirmacao', { 
         state: { 
-          messageId: savedMessage.id, 
-          pixCode: pixData.brCode,
-          qrCodeUrl: pixData.qrCodeUrl,
+          messageId: savedMessage.id,
           amount: finalPrice,
           originalAmount: originalPrice > finalPrice ? originalPrice : null,
           discountAmount: discountAmount > 0 ? discountAmount : null,
@@ -443,7 +403,10 @@ const MessageForm: React.FC = () => {
               {!appliedCoupon?.isValid && (
                 <Button
                   type="button"
-                  onClick={(e) => validateAndApplyCoupon((e.target as HTMLInputElement).value, imageFile || audioFile || videoFile ? 5 : 2)}
+                  onClick={(e) => {
+                    const input = e.currentTarget.previousElementSibling as HTMLInputElement;
+                    validateAndApplyCoupon(input.value, imageFile || audioFile || videoFile ? 5 : 2);
+                  }}
                   disabled={isValidating || isPromotionActive}
                 >
                   {isValidating ? 'Validando...' : 'Aplicar'}
