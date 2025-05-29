@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { validateCoupon, CouponValidationResult } from '@/services/couponService';
+import { validateCoupon, incrementCouponUsage, CouponValidationResult } from '@/services/couponService';
 import { useToast } from '@/hooks/use-toast';
 import { usePromotionSettings } from '@/hooks/usePromotionSettings';
 
@@ -90,12 +90,25 @@ export const useCouponValidation = () => {
     };
   };
 
+  // Função para confirmar o uso do cupom após pagamento bem-sucedido
+  const confirmCouponUsage = async (): Promise<void> => {
+    if (appliedCoupon?.coupon?.id) {
+      try {
+        await incrementCouponUsage(appliedCoupon.coupon.id);
+        console.log('Uso do cupom incrementado com sucesso');
+      } catch (error) {
+        console.error('Erro ao incrementar uso do cupom:', error);
+      }
+    }
+  };
+
   return {
     appliedCoupon,
     isValidating,
     validateAndApplyCoupon,
     removeCoupon,
     calculateFinalPrice,
+    confirmCouponUsage,
     isPromotionActive: promotionSettings?.is_active || false,
   };
 };
