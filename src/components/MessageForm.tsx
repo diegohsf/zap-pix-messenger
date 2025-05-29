@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -39,6 +39,11 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
   const [recordedAudio, setRecordedAudio] = useState<{ blob: Blob; duration: number } | null>(null);
   const [showVoiceModulator, setShowVoiceModulator] = useState(false);
   const [hasShownInitialModulation, setHasShownInitialModulation] = useState(false);
+  
+  // Refs para resetar os inputs de arquivo
+  const photoInputRef = useRef<HTMLInputElement>(null);
+  const videoInputRef = useRef<HTMLInputElement>(null);
+  
   const { toast } = useToast();
   const { settings: promotionSettings } = usePromotionSettings();
 
@@ -207,6 +212,14 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     setIsRecording(false);
     setShowVoiceModulator(false);
     setHasShownInitialModulation(false);
+    
+    // Resetar os valores dos inputs de arquivo
+    if (photoInputRef.current) {
+      photoInputRef.current.value = '';
+    }
+    if (videoInputRef.current) {
+      videoInputRef.current.value = '';
+    }
   };
 
   const handleSubmit = () => {
@@ -363,6 +376,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div className="relative">
                   <input
+                    ref={photoInputRef}
                     type="file"
                     accept="image/*"
                     onChange={(e) => handleFileUpload(e, 'photo')}
@@ -409,6 +423,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
 
                 <div className="relative">
                   <input
+                    ref={videoInputRef}
                     type="file"
                     accept="video/*"
                     onChange={(e) => handleFileUpload(e, 'video')}
