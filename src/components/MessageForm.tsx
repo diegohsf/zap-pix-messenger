@@ -372,9 +372,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   />
                   <Button
                     variant="outline"
-                    className={`w-full h-20 flex flex-col items-center justify-center gap-2 hover:bg-green-50 border-2 border-dashed ${
-                      promotionSettings?.is_active ? 'border-orange-300 bg-orange-50 animate-pulse' : ''
-                    }`}
+                    className="w-full h-20 flex flex-col items-center justify-center gap-2 hover:bg-green-50 border-2 border-dashed"
                     type="button"
                     disabled={isSubmitting || isRecording}
                   >
@@ -420,9 +418,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   />
                   <Button
                     variant="outline"
-                    className={`w-full h-20 flex flex-col items-center justify-center gap-2 hover:bg-blue-50 border-2 border-dashed ${
-                      promotionSettings?.is_active ? 'border-orange-300 bg-orange-50 animate-pulse' : ''
-                    }`}
+                    className="w-full h-20 flex flex-col items-center justify-center gap-2 hover:bg-blue-50 border-2 border-dashed"
                     type="button"
                     disabled={isSubmitting || isRecording}
                   >
