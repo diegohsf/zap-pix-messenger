@@ -9,15 +9,63 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      discount_coupons: {
+        Row: {
+          code: string
+          created_at: string
+          discount_type: string
+          discount_value: number
+          id: string
+          is_active: boolean
+          min_order_value: number | null
+          updated_at: string
+          usage_limit: number | null
+          used_count: number
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          discount_type: string
+          discount_value: number
+          id?: string
+          is_active?: boolean
+          min_order_value?: number | null
+          updated_at?: string
+          usage_limit?: number | null
+          used_count?: number
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          discount_type?: string
+          discount_value?: number
+          id?: string
+          is_active?: boolean
+          min_order_value?: number | null
+          updated_at?: string
+          usage_limit?: number | null
+          used_count?: number
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
+          coupon_code: string | null
           created_at: string
+          discount_amount: number | null
           id: string
           media_file_name: string | null
           media_file_url: string | null
           media_type: string
           message_text: string
           openpix_charge_id: string | null
+          original_price: number | null
           paid_at: string | null
           phone_number: string
           pix_code: string | null
@@ -29,13 +77,16 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          coupon_code?: string | null
           created_at?: string
+          discount_amount?: number | null
           id?: string
           media_file_name?: string | null
           media_file_url?: string | null
           media_type?: string
           message_text: string
           openpix_charge_id?: string | null
+          original_price?: number | null
           paid_at?: string | null
           phone_number: string
           pix_code?: string | null
@@ -47,13 +98,16 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          coupon_code?: string | null
           created_at?: string
+          discount_amount?: number | null
           id?: string
           media_file_name?: string | null
           media_file_url?: string | null
           media_type?: string
           message_text?: string
           openpix_charge_id?: string | null
+          original_price?: number | null
           paid_at?: string | null
           phone_number?: string
           pix_code?: string | null

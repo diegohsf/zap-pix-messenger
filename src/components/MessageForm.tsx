@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -5,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, Video, Image, Phone, MessageSquare, Mic } from 'lucide-react';
+import { Upload, Video, Image, Phone, MessageSquare, Mic, CheckCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AudioRecorder from './AudioRecorder';
 import AudioPlayer from './AudioPlayer';
@@ -14,6 +15,7 @@ import RecentMessages from './RecentMessages';
 import VoiceModulator from './VoiceModulator';
 import PromotionBanner from './PromotionBanner';
 import { usePromotionSettings } from '@/hooks/usePromotionSettings';
+import { useCouponValidation } from '@/hooks/useCouponValidation';
 
 interface MessageFormProps {
   onSubmit: (data: MessageData) => void;
@@ -39,6 +41,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
   const [recordedAudio, setRecordedAudio] = useState<{ blob: Blob; duration: number } | null>(null);
   const [showVoiceModulator, setShowVoiceModulator] = useState(false);
   const [hasShownInitialModulation, setHasShownInitialModulation] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
   
   // Refs para resetar os inputs de arquivo
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -46,6 +49,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
   
   const { toast } = useToast();
   const { settings: promotionSettings } = usePromotionSettings();
+  const { appliedCoupon, isValidating, validateAndApplyCoupon, removeCoupon, calculateFinalPrice } = useCouponValidation();
 
   const formatPhoneNumber = (value: string) => {
     const numbers = value.replace(/\D/g, '');
@@ -85,19 +89,31 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     const isPromotionActive = promotionSettings?.is_active || false;
     const discountRate = (promotionSettings?.discount_percentage || 0) / 100;
 
+    let originalPrice = basePrice;
     switch (mediaType) {
       case 'video':
         const videoExtra = 5.00;
-        return basePrice + (isPromotionActive ? videoExtra * (1 - discountRate) : videoExtra);
+        originalPrice = basePrice + (isPromotionActive ? videoExtra * (1 - discountRate) : videoExtra);
+        break;
       case 'photo':
         const photoExtra = 5.00;
-        return basePrice + (isPromotionActive ? photoExtra * (1 - discountRate) : photoExtra);
+        originalPrice = basePrice + (isPromotionActive ? photoExtra * (1 - discountRate) : photoExtra);
+        break;
       case 'audio':
         const audioExtra = 2.00;
-        return basePrice + (isPromotionActive ? audioExtra * (1 - discountRate) : audioExtra);
+        originalPrice = basePrice + (isPromotionActive ? audioExtra * (1 - discountRate) : audioExtra);
+        break;
       default:
-        return basePrice;
+        originalPrice = basePrice;
     }
+
+    // Se há cupom aplicado, calcular o preço final com desconto
+    if (appliedCoupon?.isValid) {
+      const priceCalculation = calculateFinalPrice(originalPrice);
+      return priceCalculation.finalPrice;
+    }
+
+    return originalPrice;
   };
 
   const getOriginalPrice = () => {
@@ -222,6 +238,16 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     }
   };
 
+  const handleCouponApply = async () => {
+    const originalPrice = getOriginalPrice();
+    await validateAndApplyCoupon(couponCode, originalPrice);
+  };
+
+  const handleCouponRemove = () => {
+    setCouponCode('');
+    removeCoupon();
+  };
+
   const handleSubmit = () => {
     console.log('=== VALIDAÇÃO DO FORMULÁRIO ===');
     console.log('Número:', phoneNumber);
@@ -275,12 +301,19 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     const formattedPhoneNumber = formatPhoneForWebhook(phoneNumber);
     console.log('Número formatado para webhook:', formattedPhoneNumber);
 
+    const originalPrice = getOriginalPrice();
+    const priceCalculation = calculateFinalPrice(originalPrice);
+
     const formData: MessageData = {
       phoneNumber: formattedPhoneNumber,
       messageText: message,
       mediaType,
       mediaFile,
-      price: calculatePrice(),
+      price: priceCalculation.finalPrice,
+      // Adicionar dados do cupom se aplicado
+      couponCode: appliedCoupon?.coupon?.code || null,
+      originalPrice: priceCalculation.originalPrice,
+      discountAmount: priceCalculation.discountAmount,
     };
 
     console.log('=== DADOS FINAIS PARA ENVIO ===');
@@ -512,17 +545,37 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   Preço por mensagem:
                 </span>
                 <div className="flex items-center gap-2">
-                  {promotionSettings?.is_active && mediaType !== 'none' && (
+                  {appliedCoupon?.isValid && (
+                    <div className="text-right">
+                      <div className="text-sm line-through text-gray-500">
+                        R$ {calculateFinalPrice(getOriginalPrice()).originalPrice.toFixed(2)}
+                      </div>
+                      <div className="text-xs text-green-600">
+                        Desconto: -R$ {calculateFinalPrice(getOriginalPrice()).discountAmount.toFixed(2)}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {promotionSettings?.is_active && mediaType !== 'none' && !appliedCoupon?.isValid && (
                     <span className="text-sm line-through text-gray-500">
                       R$ {getOriginalPrice().toFixed(2)}
                     </span>
                   )}
+                  
                   <Badge variant="secondary" className={`text-lg font-bold px-3 py-1 ${
-                    promotionSettings?.is_active && mediaType !== 'none' ? 'bg-orange-500 text-white animate-pulse' : ''
+                    appliedCoupon?.isValid ? 'bg-green-500 text-white animate-pulse' :
+                    (promotionSettings?.is_active && mediaType !== 'none' ? 'bg-orange-500 text-white animate-pulse' : '')
                   }`}>
                     R$ {calculatePrice().toFixed(2)}
                   </Badge>
-                  {promotionSettings?.is_active && mediaType !== 'none' && (
+                  
+                  {appliedCoupon?.isValid && (
+                    <Badge className="bg-green-500 text-white text-xs animate-bounce">
+                      CUPOM!
+                    </Badge>
+                  )}
+                  
+                  {promotionSettings?.is_active && mediaType !== 'none' && !appliedCoupon?.isValid && (
                     <Badge className="bg-green-500 text-white text-xs animate-bounce">
                       ECONOMIA!
                     </Badge>
@@ -533,6 +586,58 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                 Ao enviar uma mensagem, você concorda com nossos Termos e Condições 
                 e a Política de Privacidade.
               </p>
+            </div>
+
+            {/* Seção de Cupom de Desconto */}
+            <div className="space-y-4">
+              <label className="text-sm font-medium text-gray-700">
+                Cupom de Desconto (opcional)
+              </label>
+              
+              {!appliedCoupon?.isValid ? (
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Digite seu cupom de desconto"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                    className="flex-1"
+                    disabled={isSubmitting || isValidating}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCouponApply}
+                    disabled={isSubmitting || isValidating || !couponCode.trim()}
+                    className="px-6"
+                  >
+                    {isValidating ? 'Validando...' : 'Aplicar'}
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <div>
+                      <span className="text-sm font-medium text-green-800">
+                        Cupom {appliedCoupon.coupon?.code} aplicado!
+                      </span>
+                      <div className="text-xs text-green-600">
+                        Desconto: R$ {appliedCoupon.discountAmount?.toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleCouponRemove}
+                    className="text-red-600 hover:text-red-800"
+                    disabled={isSubmitting}
+                  >
+                    Remover
+                  </Button>
+                </div>
+              )}
             </div>
 
             <Button

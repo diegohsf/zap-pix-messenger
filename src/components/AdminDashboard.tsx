@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +9,7 @@ import { SavedMessage } from '@/services/messageService';
 import { LogOut, DollarSign, Clock, CheckCircle, ExternalLink, Zap, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { usePromotionSettings } from '@/hooks/usePromotionSettings';
+import CouponManagement from './CouponManagement';
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -25,6 +25,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   });
   const { toast } = useToast();
   const { settings: promotionSettings, isLoading: promotionLoading, updateSettings } = usePromotionSettings();
+  const [activeTab, setActiveTab] = useState<'messages' | 'coupons'>('messages');
 
   const fetchMessages = async () => {
     try {
@@ -142,139 +143,181 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
           </Button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Arrecadado</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {formatCurrency(stats.totalPaid)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Pendente</CardTitle>
-              <Clock className="h-4 w-4 text-yellow-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">
-                {formatCurrency(stats.totalPending)}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Receita Total</CardTitle>
-              <DollarSign className="h-4 w-4 text-blue-600" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {formatCurrency(stats.totalRevenue)}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Promotion Settings Card */}
-          <Card className={promotionSettings?.is_active ? "border-orange-200 bg-orange-50" : ""}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Promoção</CardTitle>
-              <Zap className={`h-4 w-4 ${promotionSettings?.is_active ? 'text-orange-600' : 'text-gray-400'}`} />
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className={`text-lg font-bold ${promotionSettings?.is_active ? 'text-orange-600' : 'text-gray-600'}`}>
-                    {promotionSettings?.is_active ? 'ATIVA' : 'INATIVA'}
-                  </div>
-                  {promotionSettings?.is_active && (
-                    <div className="text-xs text-orange-600">
-                      {promotionSettings?.discount_percentage}% OFF
-                    </div>
-                  )}
-                </div>
-                <Switch
-                  checked={promotionSettings?.is_active || false}
-                  onCheckedChange={handlePromotionToggle}
-                />
-              </div>
-            </CardContent>
-          </Card>
+        {/* Navigation Tabs */}
+        <div className="flex space-x-1 mb-6">
+          <Button
+            variant={activeTab === 'messages' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('messages')}
+          >
+            Mensagens
+          </Button>
+          <Button
+            variant={activeTab === 'coupons' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('coupons')}
+          >
+            Cupons de Desconto
+          </Button>
         </div>
 
-        {/* Messages Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Mensagens</CardTitle>
-            <Button onClick={fetchMessages} variant="outline" size="sm">
-              Atualizar
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Telefone</TableHead>
-                    <TableHead>Mensagem</TableHead>
-                    <TableHead>Mídia</TableHead>
-                    <TableHead>Valor</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Pago em</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {messages.map((message) => (
-                    <TableRow key={message.id}>
-                      <TableCell className="text-sm">
-                        {formatDate(message.created_at)}
-                      </TableCell>
-                      <TableCell className="font-mono">
-                        {message.phone_number}
-                      </TableCell>
-                      <TableCell className="max-w-lg">
-                        <div className="break-words">
-                          {message.message_text}
+        {activeTab === 'messages' && (
+          <>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Arrecadado</CardTitle>
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">
+                    {formatCurrency(stats.totalPaid)}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Total Pendente</CardTitle>
+                  <Clock className="h-4 w-4 text-yellow-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-yellow-600">
+                    {formatCurrency(stats.totalPending)}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Receita Total</CardTitle>
+                  <DollarSign className="h-4 w-4 text-blue-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {formatCurrency(stats.totalRevenue)}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Promotion Settings Card */}
+              <Card className={promotionSettings?.is_active ? "border-orange-200 bg-orange-50" : ""}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Promoção</CardTitle>
+                  <Zap className={`h-4 w-4 ${promotionSettings?.is_active ? 'text-orange-600' : 'text-gray-400'}`} />
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className={`text-lg font-bold ${promotionSettings?.is_active ? 'text-orange-600' : 'text-gray-600'}`}>
+                        {promotionSettings?.is_active ? 'ATIVA' : 'INATIVA'}
+                      </div>
+                      {promotionSettings?.is_active && (
+                        <div className="text-xs text-orange-600">
+                          {promotionSettings?.discount_percentage}% OFF
                         </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          {getMediaTypeBadge(message.media_type)}
-                          {message.media_file_url && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-8 px-3 gap-2 hover:bg-blue-50 hover:border-blue-300"
-                              onClick={() => window.open(message.media_file_url, '_blank')}
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                              Ver mídia
-                            </Button>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-semibold">
-                        {formatCurrency(message.price)}
-                      </TableCell>
-                      <TableCell>
-                        {getStatusBadge(message.status)}
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {message.paid_at ? formatDate(message.paid_at) : '-'}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      )}
+                    </div>
+                    <Switch
+                      checked={promotionSettings?.is_active || false}
+                      onCheckedChange={handlePromotionToggle}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
+
+            {/* Messages Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Mensagens</CardTitle>
+                <Button onClick={fetchMessages} variant="outline" size="sm">
+                  Atualizar
+                </Button>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Telefone</TableHead>
+                        <TableHead>Mensagem</TableHead>
+                        <TableHead>Mídia</TableHead>
+                        <TableHead>Valor</TableHead>
+                        <TableHead>Cupom</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Pago em</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {messages.map((message) => (
+                        <TableRow key={message.id}>
+                          <TableCell className="text-sm">
+                            {formatDate(message.created_at)}
+                          </TableCell>
+                          <TableCell className="font-mono">
+                            {message.phone_number}
+                          </TableCell>
+                          <TableCell className="max-w-lg">
+                            <div className="break-words">
+                              {message.message_text}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {getMediaTypeBadge(message.media_type)}
+                              {message.media_file_url && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 px-3 gap-2 hover:bg-blue-50 hover:border-blue-300"
+                                  onClick={() => window.open(message.media_file_url, '_blank')}
+                                >
+                                  <ExternalLink className="h-4 w-4" />
+                                  Ver mídia
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className="font-semibold">
+                                {formatCurrency(message.price)}
+                              </div>
+                              {message.coupon_code && message.discount_amount > 0 && (
+                                <div className="text-xs text-green-600">
+                                  <div>Original: {formatCurrency(message.original_price || 0)}</div>
+                                  <div>Desconto: -{formatCurrency(message.discount_amount)}</div>
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {message.coupon_code ? (
+                              <Badge className="bg-green-500 text-white font-mono text-xs">
+                                {message.coupon_code}
+                              </Badge>
+                            ) : (
+                              <span className="text-gray-400 text-xs">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {getStatusBadge(message.status)}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {message.paid_at ? formatDate(message.paid_at) : '-'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </>
+        )}
+
+        {activeTab === 'coupons' && <CouponManagement />}
       </div>
     </div>
   );

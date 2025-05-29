@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export interface MessageData {
@@ -8,6 +7,9 @@ export interface MessageData {
   mediaFileUrl?: string;
   mediaFileName?: string;
   price: number;
+  couponCode?: string;
+  originalPrice?: number;
+  discountAmount?: number;
 }
 
 export interface SavedMessage {
@@ -41,6 +43,9 @@ export const saveMessage = async (data: MessageData): Promise<SavedMessage> => {
       media_file_url: data.mediaFileUrl,
       media_file_name: data.mediaFileName,
       price: data.price,
+      coupon_code: data.couponCode,
+      original_price: data.originalPrice,
+      discount_amount: data.discountAmount || 0,
       status: 'pending_payment'
     })
     .select()
