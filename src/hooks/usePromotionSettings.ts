@@ -19,8 +19,7 @@ export const usePromotionSettings = () => {
 
   const fetchSettings = async () => {
     try {
-      // Use any type to bypass TypeScript errors until migration is run
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from('promotion_settings')
         .select('*')
         .single();
@@ -43,8 +42,7 @@ export const usePromotionSettings = () => {
 
     setIsUpdating(true);
     try {
-      // Use any type to bypass TypeScript errors until migration is run
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('promotion_settings')
         .update({ is_active: isActive })
         .eq('id', settings.id);

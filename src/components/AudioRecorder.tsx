@@ -10,7 +10,6 @@ interface AudioRecorderProps {
   isRecording: boolean;
   onStartRecording: () => void;
   onStopRecording: () => void;
-  promotionPrice?: React.ReactNode;
 }
 
 const AudioRecorder: React.FC<AudioRecorderProps> = ({
@@ -19,20 +18,23 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
   isRecording,
   onStartRecording,
   onStopRecording,
-  promotionPrice
 }) => {
-  const { startRecording, stopRecording } = useAudioRecorder({
+  const {
+    startRecording,
+    stopRecording,
+    recordingDuration,
+  } = useAudioRecorder({
     onRecordingComplete: onAudioRecorded,
     onError: (error) => {
       console.error('Erro na gravação:', error);
       onCancel();
-    }
+    },
   });
 
   const handleStartRecording = async () => {
     try {
-      await startRecording();
       onStartRecording();
+      await startRecording();
     } catch (error) {
       console.error('Erro ao iniciar gravação:', error);
       onCancel();
@@ -40,32 +42,38 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
   };
 
   const handleStopRecording = () => {
-    stopRecording();
     onStopRecording();
+    stopRecording();
   };
+
+  if (isRecording) {
+    return (
+      <Button
+        variant="outline"
+        className="w-full h-20 flex flex-col items-center justify-center gap-2 bg-red-50 border-red-200 hover:bg-red-100"
+        onClick={handleStopRecording}
+        type="button"
+      >
+        <Square className="h-6 w-6 text-red-600" />
+        <span className="text-xs text-red-600">Parar Gravação</span>
+        <span className="text-xs text-red-600 font-mono">
+          {Math.floor(recordingDuration / 60).toString().padStart(2, '0')}:
+          {(recordingDuration % 60).toString().padStart(2, '0')}
+        </span>
+      </Button>
+    );
+  }
 
   return (
     <Button
       variant="outline"
-      className="w-full h-20 flex flex-col items-center justify-center gap-2 hover:bg-purple-50 border-2 border-dashed"
+      className="w-full h-20 flex flex-col items-center justify-center gap-2 hover:bg-orange-50 border-2 border-dashed"
+      onClick={handleStartRecording}
       type="button"
-      onClick={isRecording ? handleStopRecording : handleStartRecording}
     >
-      {isRecording ? (
-        <>
-          <Square className="h-6 w-6 text-red-500" />
-          <span className="text-xs">Parar Gravação</span>
-          <span className="text-xs text-red-600 font-semibold">Gravando...</span>
-        </>
-      ) : (
-        <>
-          <Mic className="h-6 w-6" />
-          <span className="text-xs">Gravar Áudio</span>
-          {promotionPrice || (
-            <span className="text-xs text-purple-600 font-semibold">+ R$ 2,00</span>
-          )}
-        </>
-      )}
+      <Mic className="h-6 w-6" />
+      <span className="text-xs">Gravar Áudio</span>
+      <span className="text-xs text-orange-600 font-semibold">+ R$ 2,00</span>
     </Button>
   );
 };
