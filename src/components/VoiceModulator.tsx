@@ -45,6 +45,7 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
   const processedBufferRef = useRef<AudioBuffer | null>(null);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const processingRef = useRef<boolean>(false);
+  const lastSettingsRef = useRef<string>('');
 
   // Carregar o áudio original apenas uma vez
   useEffect(() => {
@@ -56,19 +57,22 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
     };
   }, [audioBlob]);
 
-  // Aplicar modulação quando as configurações mudarem (APÓS inicialização)
+  // Aplicar modulação quando as configurações mudarem
   useEffect(() => {
-    if (originalBufferRef.current && isInitialized && !processingRef.current) {
+    const settingsKey = JSON.stringify(settings);
+    
+    if (originalBufferRef.current && isInitialized && !processingRef.current && settingsKey !== lastSettingsRef.current) {
       console.log('🔄 Configurações alteradas, aplicando nova modulação...');
       
-      // Debounce para evitar muitas chamadas seguidas
+      // Cancelar debounce anterior
       if (debounceTimeoutRef.current) {
         clearTimeout(debounceTimeoutRef.current);
       }
       
       debounceTimeoutRef.current = setTimeout(() => {
         applyVoiceModulation();
-      }, 300);
+        lastSettingsRef.current = settingsKey;
+      }, 500);
     }
 
     return () => {
@@ -99,9 +103,11 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
       const initialUrl = URL.createObjectURL(audioBlob);
       setCurrentAudioUrl(initialUrl);
       
-      // Aplicar modulação inicial após um pequeno delay
+      // Aplicar modulação inicial
       setTimeout(() => {
         setIsInitialized(true);
+        const initialSettings = JSON.stringify(settings);
+        lastSettingsRef.current = initialSettings;
         applyVoiceModulation();
       }, 100);
     } catch (error) {
@@ -239,7 +245,7 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
       
       console.log('✅ Modulação aplicada com sucesso!');
       
-      // Chamar callback apenas uma vez
+      // Chamar callback apenas se as configurações mudaram de fato
       onModulatedAudio(modifiedBlob);
 
     } catch (error) {
@@ -329,7 +335,7 @@ const VoiceModulator: React.FC<VoiceModulatorProps> = ({
           <Mic className="h-5 w-5 text-orange-600" />
           Modulação de Voz (Opcional)
           {isProcessing && (
-            <span className="text-sm text-orange-600 animate-pulse">
+            <span className="text-sm text-orange-600">
               Processando...
             </span>
           )}
