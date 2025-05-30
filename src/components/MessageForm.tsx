@@ -11,7 +11,6 @@ import AudioRecorder from './AudioRecorder';
 import AudioPlayer from './AudioPlayer';
 import FAQ from './FAQ';
 import RecentMessages from './RecentMessages';
-import VoiceModulator from './VoiceModulator';
 import PromotionBanner from './PromotionBanner';
 import { usePromotionSettings } from '@/hooks/usePromotionSettings';
 import { useCouponValidation } from '@/hooks/useCouponValidation';
@@ -41,8 +40,6 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [isRecording, setIsRecording] = useState(false);
   const [recordedAudio, setRecordedAudio] = useState<{ blob: Blob; duration: number } | null>(null);
-  const [showVoiceModulator, setShowVoiceModulator] = useState(false);
-  const [hasShownInitialModulation, setHasShownInitialModulation] = useState(false);
   const [couponCode, setCouponCode] = useState('');
   
   // Refs para resetar os inputs de arquivo
@@ -161,8 +158,6 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
       setMediaFile(file);
       setMediaType(type);
       setRecordedAudio(null);
-      setShowVoiceModulator(false);
-      setHasShownInitialModulation(false);
       toast({
         title: "Arquivo selecionado",
         description: `${type === 'photo' ? 'Foto' : 'Vídeo'} carregado com sucesso!`,
@@ -188,33 +183,11 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     setMediaFile(audioFile);
     setMediaType('audio');
     setIsRecording(false);
-    setShowVoiceModulator(true);
-    setHasShownInitialModulation(false);
     
     toast({
       title: "Áudio gravado",
-      description: `Gravação de ${Math.round(duration)} segundos concluída em WAV!`,
+      description: `Gravação de ${Math.round(duration)} segundos concluída!`,
     });
-  };
-
-  const handleModulatedAudio = (modulatedBlob: Blob) => {
-    console.log('=== ÁUDIO MODULADO ===');
-    console.log('Tamanho do blob modulado:', modulatedBlob.size, 'bytes');
-    
-    const fileName = `audio_modulated_${Date.now()}.wav`;
-    const modulatedFile = new File([modulatedBlob], fileName, { type: 'audio/wav' });
-    
-    setMediaFile(modulatedFile);
-    setRecordedAudio(prev => prev ? { ...prev, blob: modulatedBlob } : null);
-    
-    if (hasShownInitialModulation) {
-      toast({
-        title: "Voz modulada",
-        description: "Modulação aplicada com sucesso!",
-      });
-    } else {
-      setHasShownInitialModulation(true);
-    }
   };
 
   const handleCancelAudio = () => {
@@ -222,8 +195,6 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     setIsRecording(false);
     setRecordedAudio(null);
     setMediaFile(null);
-    setShowVoiceModulator(false);
-    setHasShownInitialModulation(false);
     if (mediaType === 'audio') {
       setMediaType('none');
     }
@@ -235,8 +206,6 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     setMediaFile(null);
     setRecordedAudio(null);
     setIsRecording(false);
-    setShowVoiceModulator(false);
-    setHasShownInitialModulation(false);
     
     // Resetar os valores dos inputs de arquivo
     if (photoInputRef.current) {
@@ -535,14 +504,6 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Prévia do áudio gravado:</label>
                   <AudioPlayer audioBlob={recordedAudio.blob} duration={recordedAudio.duration} />
-                  
-                  {showVoiceModulator && (
-                    <VoiceModulator
-                      audioBlob={recordedAudio.blob}
-                      duration={recordedAudio.duration}
-                      onModulatedAudio={handleModulatedAudio}
-                    />
-                  )}
                 </div>
               )}
             </div>
