@@ -13,6 +13,18 @@ serve(async (req) => {
   }
 
   try {
+    // Verificar se a chave da OpenAI está configurada
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
+    if (!openaiApiKey) {
+      console.log('❌ OPENAI_API_KEY não configurada, abortando geração de post')
+      return new Response(JSON.stringify({ 
+        success: false, 
+        message: 'OPENAI_API_KEY não configurada' 
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -45,11 +57,6 @@ serve(async (req) => {
     }
 
     // Gerar conteúdo com ChatGPT
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
-    if (!openaiApiKey) {
-      throw new Error('OPENAI_API_KEY não configurada')
-    }
-
     const prompt = `
     Baseado na seguinte mensagem do WhatsApp enviada através do Zap Elegante, crie uma notícia interessante e criativa:
 

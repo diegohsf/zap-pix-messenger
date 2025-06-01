@@ -5,7 +5,6 @@ import MessageForm, { MessageData } from '@/components/MessageForm';
 import PaymentModal from '@/components/PaymentModal';
 import Footer from '@/components/Footer';
 import RecentMessages from '@/components/RecentMessages';
-import BlogSection from '@/components/BlogSection';
 import { saveMessage } from '@/services/messageService';
 import { uploadFile } from '@/services/fileUploadService';
 import { generateBlogPost } from '@/services/blogService';
@@ -135,9 +134,8 @@ const Index: React.FC = () => {
           isSubmitting={isSubmitting}
         />
         
-        {/* Seção do Blog */}
+        {/* Seção de Mensagens Recentes */}
         <div className="container mx-auto px-4 py-8">
-          <BlogSection />
           <RecentMessages />
         </div>
       </div>
