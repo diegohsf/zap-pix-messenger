@@ -1,12 +1,14 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { SavedMessage } from '@/services/messageService';
-import { LogOut, DollarSign, Clock, CheckCircle, ExternalLink, Zap, Settings } from 'lucide-react';
+import { LogOut, DollarSign, Clock, CheckCircle, ExternalLink, Zap, Settings, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { usePromotionSettings } from '@/hooks/usePromotionSettings';
 import CouponManagement from './CouponManagement';
@@ -14,6 +16,8 @@ import CouponManagement from './CouponManagement';
 interface AdminDashboardProps {
   onLogout: () => void;
 }
+
+type DateFilter = 'today' | 'yesterday' | 'last3days' | 'last7days' | 'last14days' | 'last30days' | 'last3months';
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   const [messages, setMessages] = useState<SavedMessage[]>([]);
@@ -23,9 +27,59 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     totalPending: 0,
     totalRevenue: 0
   });
+  const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const { toast } = useToast();
   const { settings: promotionSettings, isLoading: promotionLoading, updateSettings } = usePromotionSettings();
   const [activeTab, setActiveTab] = useState<'messages' | 'coupons'>('messages');
+
+  const getDateRange = (filter: DateFilter) => {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    switch (filter) {
+      case 'today':
+        return {
+          start: today.toISOString(),
+          end: new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString()
+        };
+      case 'yesterday':
+        const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+        return {
+          start: yesterday.toISOString(),
+          end: today.toISOString()
+        };
+      case 'last3days':
+        return {
+          start: new Date(today.getTime() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+          end: new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString()
+        };
+      case 'last7days':
+        return {
+          start: new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+          end: new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString()
+        };
+      case 'last14days':
+        return {
+          start: new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+          end: new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString()
+        };
+      case 'last30days':
+        return {
+          start: new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          end: new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString()
+        };
+      case 'last3months':
+        return {
+          start: new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString(),
+          end: new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString()
+        };
+      default:
+        return {
+          start: today.toISOString(),
+          end: new Date(today.getTime() + 24 * 60 * 60 * 1000).toISOString()
+        };
+    }
+  };
 
   const fetchMessages = async () => {
     try {
@@ -53,8 +107,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   };
 
   const calculateStats = (messages: SavedMessage[]) => {
-    const paid = messages.filter(msg => msg.status === 'paid');
-    const pending = messages.filter(msg => msg.status === 'pending_payment');
+    const { start, end } = getDateRange(dateFilter);
+    
+    // Filtrar mensagens por data
+    const filteredMessages = messages.filter(msg => {
+      const msgDate = new Date(msg.created_at);
+      return msgDate >= new Date(start) && msgDate < new Date(end);
+    });
+
+    const paid = filteredMessages.filter(msg => msg.status === 'paid');
+    const pending = filteredMessages.filter(msg => msg.status === 'pending_payment');
     
     const totalPaid = paid.reduce((sum, msg) => sum + msg.price, 0);
     const totalPending = pending.reduce((sum, msg) => sum + msg.price, 0);
@@ -116,9 +178,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
     await updateSettings({ is_active: isActive });
   };
 
+  const getFilterLabel = (filter: DateFilter) => {
+    switch (filter) {
+      case 'today': return 'Hoje';
+      case 'yesterday': return 'Ontem';
+      case 'last3days': return 'Últimos 3 dias';
+      case 'last7days': return 'Últimos 7 dias';
+      case 'last14days': return 'Últimos 14 dias';
+      case 'last30days': return 'Últimos 30 dias';
+      case 'last3months': return 'Últimos 3 meses';
+      default: return 'Hoje';
+    }
+  };
+
   useEffect(() => {
     fetchMessages();
   }, []);
+
+  useEffect(() => {
+    if (messages.length > 0) {
+      calculateStats(messages);
+    }
+  }, [dateFilter, messages]);
 
   if (isLoading || promotionLoading) {
     return (
@@ -161,6 +242,31 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
 
         {activeTab === 'messages' && (
           <>
+            {/* Date Filter */}
+            <div className="mb-6">
+              <div className="flex items-center gap-4">
+                <Calendar className="h-5 w-5 text-gray-600" />
+                <span className="text-sm font-medium text-gray-700">Filtrar por período:</span>
+                <Select value={dateFilter} onValueChange={(value: DateFilter) => setDateFilter(value)}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="Selecione o período" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="today">Hoje</SelectItem>
+                    <SelectItem value="yesterday">Ontem</SelectItem>
+                    <SelectItem value="last3days">Últimos 3 dias</SelectItem>
+                    <SelectItem value="last7days">Últimos 7 dias</SelectItem>
+                    <SelectItem value="last14days">Últimos 14 dias</SelectItem>
+                    <SelectItem value="last30days">Últimos 30 dias</SelectItem>
+                    <SelectItem value="last3months">Últimos 3 meses</SelectItem>
+                  </SelectContent>
+                </Select>
+                <span className="text-sm text-gray-500">
+                  Mostrando dados de: {getFilterLabel(dateFilter)}
+                </span>
+              </div>
+            </div>
+
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
               <Card>
