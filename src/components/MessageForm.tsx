@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -107,7 +108,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
         totalPrice = basePrice;
     }
 
-    // Aplicar desconto da promoção se estiver ativa
+    // Aplicar desconto da promoção se estiver ativa - AGORA INCLUI A MENSAGEM BASE
     if (promotionSettings?.is_active && promotionSettings?.discount_percentage > 0) {
       const discountRate = promotionSettings.discount_percentage / 100;
       totalPrice = totalPrice * (1 - discountRate);
@@ -426,8 +427,8 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                     {promotionSettings?.is_active ? (
                       <div className="text-center">
                         <span className="text-xs text-green-600 font-semibold line-through">+ R$ 5,00</span>
-                        <span className="text-xs text-orange-600 font-bold block">+ R$ 2,50</span>
-                        <Badge className="bg-orange-500 text-white text-xs animate-bounce">50% OFF</Badge>
+                        <span className="text-xs text-orange-600 font-bold block">+ R$ {(5.00 * (1 - (promotionSettings?.discount_percentage || 0) / 100)).toFixed(2)}</span>
+                        <Badge className="bg-orange-500 text-white text-xs animate-bounce">{promotionSettings?.discount_percentage}% OFF</Badge>
                       </div>
                     ) : (
                       <span className="text-xs text-green-600 font-semibold">+ R$ 5,00</span>
@@ -444,8 +445,8 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   promotionPrice={promotionSettings?.is_active ? (
                     <div className="text-center">
                       <span className="text-xs text-green-600 font-semibold line-through">+ R$ 2,00</span>
-                      <span className="text-xs text-orange-600 font-bold block">+ R$ 1,00</span>
-                      <Badge className="bg-orange-500 text-white text-xs animate-bounce">50% OFF</Badge>
+                      <span className="text-xs text-orange-600 font-bold block">+ R$ {(2.00 * (1 - (promotionSettings?.discount_percentage || 0) / 100)).toFixed(2)}</span>
+                      <Badge className="bg-orange-500 text-white text-xs animate-bounce">{promotionSettings?.discount_percentage}% OFF</Badge>
                     </div>
                   ) : (
                     <span className="text-xs text-orange-600 font-semibold">+ R$ 2,00</span>
@@ -473,8 +474,8 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                     {promotionSettings?.is_active ? (
                       <div className="text-center">
                         <span className="text-xs text-green-600 font-semibold line-through">+ R$ 5,00</span>
-                        <span className="text-xs text-orange-600 font-bold block">+ R$ 2,50</span>
-                        <Badge className="bg-orange-500 text-white text-xs animate-bounce">50% OFF</Badge>
+                        <span className="text-xs text-orange-600 font-bold block">+ R$ {(5.00 * (1 - (promotionSettings?.discount_percentage || 0) / 100)).toFixed(2)}</span>
+                        <Badge className="bg-orange-500 text-white text-xs animate-bounce">{promotionSettings?.discount_percentage}% OFF</Badge>
                       </div>
                     ) : (
                       <span className="text-xs text-blue-600 font-semibold">+ R$ 5,00</span>
@@ -546,7 +547,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                     </div>
                   )}
                   
-                  {promotionSettings?.is_active && mediaType !== 'none' && !appliedCoupon?.isValid && (
+                  {promotionSettings?.is_active && !appliedCoupon?.isValid && (
                     <span className="text-sm line-through text-gray-500">
                       R$ {getOriginalPrice().toFixed(2)}
                     </span>
@@ -554,7 +555,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   
                   <Badge variant="secondary" className={`text-lg font-bold px-3 py-1 ${
                     appliedCoupon?.isValid ? 'bg-green-500 text-white animate-pulse' :
-                    (promotionSettings?.is_active && mediaType !== 'none' ? 'bg-orange-500 text-white animate-pulse' : '')
+                    (promotionSettings?.is_active ? 'bg-orange-500 text-white animate-pulse' : '')
                   }`}>
                     R$ {calculatePrice().toFixed(2)}
                   </Badge>
@@ -565,7 +566,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                     </Badge>
                   )}
                   
-                  {promotionSettings?.is_active && mediaType !== 'none' && !appliedCoupon?.isValid && (
+                  {promotionSettings?.is_active && !appliedCoupon?.isValid && (
                     <Badge className="bg-green-500 text-white text-xs animate-bounce">
                       ECONOMIA!
                     </Badge>
