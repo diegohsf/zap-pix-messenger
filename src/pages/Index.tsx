@@ -19,6 +19,7 @@ const Index: React.FC = () => {
   const handleFormSubmit = async (data: MessageData) => {
     console.log('=== PROCESSANDO ENVIO DO FORMULÁRIO ===');
     console.log('Dados recebidos:', data);
+    console.log('Preço a ser cobrado:', data.price);
     
     setIsSubmitting(true);
     
@@ -45,14 +46,17 @@ const Index: React.FC = () => {
         }
       }
 
-      // Preparar dados para salvar no banco
+      // Preparar dados para salvar no banco - usando o preço já calculado
       const messageData = {
         phoneNumber: data.phoneNumber,
         messageText: data.messageText,
         mediaType: data.mediaType,
         mediaFileUrl: fileUrl,
         mediaFileName: fileName,
-        price: data.price
+        price: data.price, // Usar o preço já calculado com promoções
+        couponCode: data.couponCode,
+        originalPrice: data.originalPrice,
+        discountAmount: data.discountAmount || 0
       };
 
       console.log('=== SALVANDO MENSAGEM NO BANCO ===');

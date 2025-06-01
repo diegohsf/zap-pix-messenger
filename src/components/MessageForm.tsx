@@ -92,45 +92,46 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
 
   const calculatePrice = () => {
     const basePrice = 5.00;
-    const isPromotionActive = promotionSettings?.is_active || false;
-    const discountRate = (promotionSettings?.discount_percentage || 0) / 100;
+    let totalPrice = basePrice;
 
-    let originalPrice = basePrice;
+    // Adicionar custo da mídia
     switch (mediaType) {
       case 'video':
-        const videoExtra = 5.00;
-        originalPrice = basePrice + (isPromotionActive ? videoExtra * (1 - discountRate) : videoExtra);
-        break;
       case 'photo':
-        const photoExtra = 5.00;
-        originalPrice = basePrice + (isPromotionActive ? photoExtra * (1 - discountRate) : photoExtra);
+        totalPrice += 5.00;
         break;
       case 'audio':
-        const audioExtra = 2.00;
-        originalPrice = basePrice + (isPromotionActive ? audioExtra * (1 - discountRate) : audioExtra);
+        totalPrice += 2.00;
         break;
       default:
-        originalPrice = basePrice;
+        totalPrice = basePrice;
     }
 
-    // Se há cupom aplicado, calcular o preço final com desconto
+    // Aplicar desconto da promoção se estiver ativa
+    if (promotionSettings?.is_active && promotionSettings?.discount_percentage > 0) {
+      const discountRate = promotionSettings.discount_percentage / 100;
+      totalPrice = totalPrice * (1 - discountRate);
+    }
+
+    // Se há cupom aplicado, calcular o preço final com desconto do cupom
     if (appliedCoupon?.isValid) {
-      const priceCalculation = calculateFinalPrice(originalPrice);
+      const priceCalculation = calculateFinalPrice(totalPrice);
       return priceCalculation.finalPrice;
     }
 
-    return originalPrice;
+    return totalPrice;
   };
 
   const getOriginalPrice = () => {
+    const basePrice = 5.00;
     switch (mediaType) {
       case 'video':
       case 'photo':
-        return 10.00;
+        return basePrice + 5.00; // 10.00
       case 'audio':
-        return 7.00;
+        return basePrice + 2.00; // 7.00
       default:
-        return 5.00;
+        return basePrice; // 5.00
     }
   };
 
@@ -279,22 +280,42 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     const formattedPhoneNumber = formatPhoneForWebhook(phoneNumber);
     console.log('Número formatado para webhook:', formattedPhoneNumber);
 
+    const finalPrice = calculatePrice();
     const originalPrice = getOriginalPrice();
-    const priceCalculation = calculateFinalPrice(originalPrice);
+
+    // Se há cupom aplicado, usar os valores calculados pelo cupom
+    let priceData;
+    if (appliedCoupon?.isValid) {
+      const priceCalculation = calculateFinalPrice(originalPrice);
+      priceData = {
+        price: priceCalculation.finalPrice,
+        originalPrice: priceCalculation.originalPrice,
+        discountAmount: priceCalculation.discountAmount,
+        couponCode: appliedCoupon.coupon?.code
+      };
+    } else {
+      // Se não há cupom mas há promoção ativa
+      priceData = {
+        price: finalPrice,
+        originalPrice: promotionSettings?.is_active ? originalPrice : finalPrice,
+        discountAmount: promotionSettings?.is_active ? (originalPrice - finalPrice) : 0
+      };
+    }
 
     const formData: MessageData = {
       phoneNumber: formattedPhoneNumber,
       messageText: message,
       mediaType,
       mediaFile,
-      price: priceCalculation.finalPrice,
-      couponCode: appliedCoupon?.coupon?.code || undefined,
-      originalPrice: priceCalculation.originalPrice,
-      discountAmount: priceCalculation.discountAmount,
+      ...priceData
     };
 
     console.log('=== DADOS FINAIS PARA ENVIO ===');
     console.log('Dados do formulário:', formData);
+    console.log('Preço final:', finalPrice);
+    console.log('Preço original:', originalPrice);
+    console.log('Promoção ativa:', promotionSettings?.is_active);
+    console.log('Desconto da promoção:', promotionSettings?.discount_percentage);
     console.log('=====================================');
 
     onSubmit(formData);
