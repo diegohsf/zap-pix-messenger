@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -96,23 +95,26 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     let totalPrice = basePrice;
 
     // Adicionar custo da mídia
+    let mediaCost = 0;
     switch (mediaType) {
       case 'video':
       case 'photo':
-        totalPrice += 5.00;
+        mediaCost = 5.00;
         break;
       case 'audio':
-        totalPrice += 2.00;
+        mediaCost = 2.00;
         break;
       default:
-        totalPrice = basePrice;
+        mediaCost = 0;
     }
 
-    // Aplicar desconto da promoção se estiver ativa - AGORA INCLUI A MENSAGEM BASE
-    if (promotionSettings?.is_active && promotionSettings?.discount_percentage > 0) {
+    // Aplicar desconto da promoção APENAS na mídia, não na mensagem base
+    if (promotionSettings?.is_active && promotionSettings?.discount_percentage > 0 && mediaCost > 0) {
       const discountRate = promotionSettings.discount_percentage / 100;
-      totalPrice = totalPrice * (1 - discountRate);
+      mediaCost = mediaCost * (1 - discountRate);
     }
+
+    totalPrice = basePrice + mediaCost;
 
     // Se há cupom aplicado, calcular o preço final com desconto do cupom
     if (appliedCoupon?.isValid) {
@@ -547,7 +549,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                     </div>
                   )}
                   
-                  {promotionSettings?.is_active && !appliedCoupon?.isValid && (
+                  {promotionSettings?.is_active && mediaType !== 'none' && !appliedCoupon?.isValid && (
                     <span className="text-sm line-through text-gray-500">
                       R$ {getOriginalPrice().toFixed(2)}
                     </span>
@@ -555,7 +557,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   
                   <Badge variant="secondary" className={`text-lg font-bold px-3 py-1 ${
                     appliedCoupon?.isValid ? 'bg-green-500 text-white animate-pulse' :
-                    (promotionSettings?.is_active ? 'bg-orange-500 text-white animate-pulse' : '')
+                    (promotionSettings?.is_active && mediaType !== 'none' ? 'bg-orange-500 text-white animate-pulse' : '')
                   }`}>
                     R$ {calculatePrice().toFixed(2)}
                   </Badge>
@@ -566,7 +568,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                     </Badge>
                   )}
                   
-                  {promotionSettings?.is_active && !appliedCoupon?.isValid && (
+                  {promotionSettings?.is_active && mediaType !== 'none' && !appliedCoupon?.isValid && (
                     <Badge className="bg-green-500 text-white text-xs animate-bounce">
                       ECONOMIA!
                     </Badge>
