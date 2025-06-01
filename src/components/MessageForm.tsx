@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -421,22 +420,24 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   />
                   <Button
                     variant="outline"
-                    className="w-full h-20 flex flex-col items-center justify-center gap-1 hover:bg-green-50 border-2 border-dashed"
+                    className="w-full h-24 flex flex-col items-center justify-center gap-1 hover:bg-green-50 border-2 border-dashed relative"
                     type="button"
                     disabled={isSubmitting || isRecording}
                   >
                     <Image className="h-6 w-6" />
                     <span className="text-xs font-semibold">Enviar Foto</span>
                     {promotionSettings?.is_active ? (
-                      <div className="text-center">
+                      <div className="text-center space-y-1">
                         <div className="text-xs text-gray-500 line-through">+ R$ 5,00</div>
                         <div className="text-xs text-green-600 font-bold">+ R$ {(5.00 * (1 - (promotionSettings?.discount_percentage || 0) / 100)).toFixed(2)}</div>
-                        <Badge className="bg-orange-500 text-white text-xs mt-1">
-                          {promotionSettings?.discount_percentage}% OFF
-                        </Badge>
                       </div>
                     ) : (
                       <span className="text-xs text-green-600 font-semibold">+ R$ 5,00</span>
+                    )}
+                    {promotionSettings?.is_active && (
+                      <Badge className="bg-orange-500 text-white text-xs absolute -top-2 -right-2">
+                        {promotionSettings?.discount_percentage}% OFF
+                      </Badge>
                     )}
                   </Button>
                 </div>
@@ -448,16 +449,15 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   onStartRecording={() => setIsRecording(true)}
                   onStopRecording={() => setIsRecording(false)}
                   promotionPrice={promotionSettings?.is_active ? (
-                    <div className="text-center">
+                    <div className="text-center space-y-1">
                       <div className="text-xs text-gray-500 line-through">+ R$ 2,00</div>
                       <div className="text-xs text-orange-600 font-bold">+ R$ {(2.00 * (1 - (promotionSettings?.discount_percentage || 0) / 100)).toFixed(2)}</div>
-                      <Badge className="bg-orange-500 text-white text-xs mt-1">
-                        {promotionSettings?.discount_percentage}% OFF
-                      </Badge>
                     </div>
                   ) : (
                     <span className="text-xs text-orange-600 font-semibold">+ R$ 2,00</span>
                   )}
+                  showPromotionBadge={promotionSettings?.is_active}
+                  discountPercentage={promotionSettings?.discount_percentage}
                 />
 
                 <div className="relative">
@@ -472,22 +472,24 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   />
                   <Button
                     variant="outline"
-                    className="w-full h-20 flex flex-col items-center justify-center gap-1 hover:bg-blue-50 border-2 border-dashed"
+                    className="w-full h-24 flex flex-col items-center justify-center gap-1 hover:bg-blue-50 border-2 border-dashed relative"
                     type="button"
                     disabled={isSubmitting || isRecording}
                   >
                     <Video className="h-6 w-6" />
                     <span className="text-xs font-semibold">Enviar Vídeo</span>
                     {promotionSettings?.is_active ? (
-                      <div className="text-center">
+                      <div className="text-center space-y-1">
                         <div className="text-xs text-gray-500 line-through">+ R$ 5,00</div>
                         <div className="text-xs text-blue-600 font-bold">+ R$ {(5.00 * (1 - (promotionSettings?.discount_percentage || 0) / 100)).toFixed(2)}</div>
-                        <Badge className="bg-orange-500 text-white text-xs mt-1">
-                          {promotionSettings?.discount_percentage}% OFF
-                        </Badge>
                       </div>
                     ) : (
                       <span className="text-xs text-blue-600 font-semibold">+ R$ 5,00</span>
+                    )}
+                    {promotionSettings?.is_active && (
+                      <Badge className="bg-orange-500 text-white text-xs absolute -top-2 -right-2">
+                        {promotionSettings?.discount_percentage}% OFF
+                      </Badge>
                     )}
                   </Button>
                 </div>
