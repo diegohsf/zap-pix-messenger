@@ -86,8 +86,10 @@ serve(async (req) => {
     - Use tom jornalístico mas divertido
     - Se houver mídia, mencione no contexto da história
     - Foque no aspecto humano e interessante da mensagem
+    - Responda APENAS com JSON válido, sem markdown ou formatação
 
-    Responda APENAS com o JSON válido:
+    Exemplo de resposta:
+    {"title": "Título da notícia", "excerpt": "Resumo curto", "content": "<p>Conteúdo em HTML...</p>"}
     `
 
     const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -114,10 +116,24 @@ serve(async (req) => {
 
     let generatedContent;
     try {
-      generatedContent = JSON.parse(openaiData.choices[0].message.content)
+      // Extrair o conteúdo da resposta
+      let content = openaiData.choices[0].message.content.trim()
+      console.log('📄 Conteúdo bruto da OpenAI:', content);
+      
+      // Remover blocos de código markdown se existirem
+      if (content.includes('```json')) {
+        content = content.replace(/```json\s*/g, '').replace(/```\s*$/g, '').trim()
+      } else if (content.includes('```')) {
+        content = content.replace(/```\s*/g, '').trim()
+      }
+      
+      console.log('🔧 Conteúdo limpo:', content);
+      
+      generatedContent = JSON.parse(content)
       console.log('✅ Conteúdo parseado:', generatedContent.title);
     } catch (parseError) {
       console.error('❌ Erro ao fazer parse do JSON:', parseError);
+      console.error('📄 Conteúdo que falhou no parse:', openaiData.choices[0].message.content);
       throw new Error('Erro ao processar resposta da IA')
     }
 
