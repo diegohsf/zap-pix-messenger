@@ -13,6 +13,8 @@ serve(async (req) => {
   }
 
   try {
+    console.log('🤖 Iniciando geração de post do blog...');
+
     // Verificar se a chave da OpenAI está configurada
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
     if (!openaiApiKey) {
@@ -22,8 +24,11 @@ serve(async (req) => {
         message: 'OPENAI_API_KEY não configurada' 
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400
       })
     }
+
+    console.log('✅ OpenAI API Key encontrada');
 
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -31,6 +36,7 @@ serve(async (req) => {
     )
 
     const { messageId } = await req.json()
+    console.log('📝 Processando mensagem ID:', messageId);
 
     // Buscar dados da mensagem
     const { data: message, error: messageError } = await supabaseClient
@@ -40,8 +46,11 @@ serve(async (req) => {
       .single()
 
     if (messageError || !message) {
+      console.error('❌ Erro ao buscar mensagem:', messageError);
       throw new Error('Mensagem não encontrada')
     }
+
+    console.log('📄 Mensagem encontrada:', message.message_text);
 
     // Verificar se já existe um post para esta mensagem
     const { data: existingPost } = await supabaseClient
@@ -51,12 +60,15 @@ serve(async (req) => {
       .single()
 
     if (existingPost) {
+      console.log('⚠️ Post já existe para esta mensagem');
       return new Response(JSON.stringify({ success: true, message: 'Post já existe' }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       })
     }
 
     // Gerar conteúdo com ChatGPT
+    console.log('🧠 Gerando conteúdo com OpenAI...');
+    
     const prompt = `
     Baseado na seguinte mensagem do WhatsApp enviada através do Zap Elegante, crie uma notícia interessante e criativa:
 
@@ -85,19 +97,40 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-4o-mini',
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.8,
         max_tokens: 1500,
       }),
     })
 
+    if (!openaiResponse.ok) {
+      console.error('❌ Erro na API do OpenAI:', openaiResponse.status);
+      throw new Error('Erro na API do OpenAI')
+    }
+
     const openaiData = await openaiResponse.json()
-    const generatedContent = JSON.parse(openaiData.choices[0].message.content)
+    console.log('🎯 Resposta do OpenAI recebida');
+
+    let generatedContent;
+    try {
+      generatedContent = JSON.parse(openaiData.choices[0].message.content)
+      console.log('✅ Conteúdo parseado:', generatedContent.title);
+    } catch (parseError) {
+      console.error('❌ Erro ao fazer parse do JSON:', parseError);
+      throw new Error('Erro ao processar resposta da IA')
+    }
 
     // Gerar slug único
-    const { data: slugData } = await supabaseClient
+    const { data: slugData, error: slugError } = await supabaseClient
       .rpc('generate_unique_slug', { title_text: generatedContent.title })
+
+    if (slugError) {
+      console.error('❌ Erro ao gerar slug:', slugError);
+      throw new Error('Erro ao gerar slug')
+    }
+
+    console.log('📎 Slug gerado:', slugData);
 
     // Salvar post no banco
     const { data: blogPost, error: insertError } = await supabaseClient
@@ -115,18 +148,22 @@ serve(async (req) => {
       .single()
 
     if (insertError) {
+      console.error('❌ Erro ao salvar post:', insertError);
       throw insertError
     }
 
-    console.log('Post do blog criado:', blogPost)
+    console.log('🎉 Post do blog criado com sucesso:', blogPost.title);
 
     return new Response(JSON.stringify({ success: true, post: blogPost }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
 
   } catch (error) {
-    console.error('Erro ao gerar post do blog:', error)
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error('💥 Erro geral ao gerar post do blog:', error)
+    return new Response(JSON.stringify({ 
+      success: false, 
+      error: error.message || 'Erro interno do servidor' 
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })

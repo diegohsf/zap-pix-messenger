@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import MessageForm, { MessageData } from '@/components/MessageForm';
 import PaymentModal from '@/components/PaymentModal';
 import Footer from '@/components/Footer';
-import RecentMessages from '@/components/RecentMessages';
 import BlogSection from '@/components/BlogSection';
 import { saveMessage } from '@/services/messageService';
 import { uploadFile } from '@/services/fileUploadService';
@@ -102,22 +101,32 @@ const Index: React.FC = () => {
   };
 
   const handlePaymentConfirmed = async (transactionId: string) => {
-    console.log('Pagamento confirmado:', transactionId);
+    console.log('🎉 Pagamento confirmado! ID da transação:', transactionId);
     
     // Tentar gerar post do blog automaticamente
     if (currentMessageId) {
       try {
-        console.log('🤖 Tentando gerar post do blog...');
-        await generateBlogPost(currentMessageId);
-        console.log('✅ Post do blog gerado com sucesso!');
+        console.log('🤖 Tentando gerar post do blog para mensagem:', currentMessageId);
+        const result = await generateBlogPost(currentMessageId);
+        console.log('✅ Post do blog gerado com sucesso!', result);
+        
+        toast({
+          title: "Post do blog criado!",
+          description: "Uma notícia foi gerada automaticamente.",
+        });
       } catch (error) {
         console.error('❌ Erro ao gerar post do blog:', error);
         // Não mostrar erro ao usuário, é funcionalidade secundária
       }
     }
     
-    // Redirecionar para a página de confirmação
+    // Fechar modal e limpar dados
     setShowPaymentModal(false);
+    setCurrentMessageId(null);
+    setCurrentMessageData(null);
+    
+    // Redirecionar para a página de confirmação com o ID da transação
+    console.log('🔄 Redirecionando para página de confirmação...');
     navigate(`/confirmacao/${transactionId}`);
   };
 
@@ -138,9 +147,6 @@ const Index: React.FC = () => {
         <div className="container mx-auto px-4 py-8">
           {/* Seção do Blog */}
           <BlogSection />
-          
-          {/* Seção de Mensagens Recentes */}
-          <RecentMessages />
         </div>
       </div>
       <Footer />
