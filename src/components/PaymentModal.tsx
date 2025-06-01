@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -67,6 +66,24 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         if (message && message.status === 'paid' && message.transaction_id) {
           console.log('Payment confirmed, redirecting...', message.transaction_id);
           
+          // Disparar evento de compra no GA4
+          if (typeof window !== 'undefined' && window.gtag && messageData) {
+            window.gtag('event', 'purchase', {
+              transaction_id: message.transaction_id,
+              value: messageData.price,
+              currency: 'BRL',
+              items: [{
+                item_id: `zap_${messageData.mediaType}`,
+                item_name: `WhatsApp ${messageData.mediaType === 'none' ? 'Texto' : 
+                           messageData.mediaType === 'photo' ? 'Foto' :
+                           messageData.mediaType === 'audio' ? 'Áudio' : 'Vídeo'}`,
+                category: 'whatsapp_message',
+                quantity: 1,
+                price: messageData.price
+              }]
+            });
+          }
+          
           toast({
             title: "Pagamento confirmado!",
             description: "Redirecionando para a página de confirmação...",
@@ -87,7 +104,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     const statusInterval = setInterval(checkPaymentStatus, 5000);
 
     return () => clearInterval(statusInterval);
-  }, [messageId, isOpen, onPaymentConfirmed, toast]);
+  }, [messageId, isOpen, onPaymentConfirmed, toast, messageData]);
 
   const generatePixCharge = async () => {
     if (!messageData || !messageId) return;
