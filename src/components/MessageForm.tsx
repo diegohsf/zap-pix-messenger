@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -420,17 +421,19 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   />
                   <Button
                     variant="outline"
-                    className="w-full h-20 flex flex-col items-center justify-center gap-2 hover:bg-green-50 border-2 border-dashed"
+                    className="w-full h-20 flex flex-col items-center justify-center gap-1 hover:bg-green-50 border-2 border-dashed"
                     type="button"
                     disabled={isSubmitting || isRecording}
                   >
                     <Image className="h-6 w-6" />
-                    <span className="text-xs">Enviar Foto</span>
+                    <span className="text-xs font-semibold">Enviar Foto</span>
                     {promotionSettings?.is_active ? (
                       <div className="text-center">
-                        <span className="text-xs text-green-600 font-semibold line-through">+ R$ 5,00</span>
-                        <span className="text-xs text-orange-600 font-bold block">+ R$ {(5.00 * (1 - (promotionSettings?.discount_percentage || 0) / 100)).toFixed(2)}</span>
-                        <Badge className="bg-orange-500 text-white text-xs animate-bounce">{promotionSettings?.discount_percentage}% OFF</Badge>
+                        <div className="text-xs text-gray-500 line-through">+ R$ 5,00</div>
+                        <div className="text-xs text-green-600 font-bold">+ R$ {(5.00 * (1 - (promotionSettings?.discount_percentage || 0) / 100)).toFixed(2)}</div>
+                        <Badge className="bg-orange-500 text-white text-xs mt-1">
+                          {promotionSettings?.discount_percentage}% OFF
+                        </Badge>
                       </div>
                     ) : (
                       <span className="text-xs text-green-600 font-semibold">+ R$ 5,00</span>
@@ -446,9 +449,11 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   onStopRecording={() => setIsRecording(false)}
                   promotionPrice={promotionSettings?.is_active ? (
                     <div className="text-center">
-                      <span className="text-xs text-green-600 font-semibold line-through">+ R$ 2,00</span>
-                      <span className="text-xs text-orange-600 font-bold block">+ R$ {(2.00 * (1 - (promotionSettings?.discount_percentage || 0) / 100)).toFixed(2)}</span>
-                      <Badge className="bg-orange-500 text-white text-xs animate-bounce">{promotionSettings?.discount_percentage}% OFF</Badge>
+                      <div className="text-xs text-gray-500 line-through">+ R$ 2,00</div>
+                      <div className="text-xs text-orange-600 font-bold">+ R$ {(2.00 * (1 - (promotionSettings?.discount_percentage || 0) / 100)).toFixed(2)}</div>
+                      <Badge className="bg-orange-500 text-white text-xs mt-1">
+                        {promotionSettings?.discount_percentage}% OFF
+                      </Badge>
                     </div>
                   ) : (
                     <span className="text-xs text-orange-600 font-semibold">+ R$ 2,00</span>
@@ -467,17 +472,19 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   />
                   <Button
                     variant="outline"
-                    className="w-full h-20 flex flex-col items-center justify-center gap-2 hover:bg-blue-50 border-2 border-dashed"
+                    className="w-full h-20 flex flex-col items-center justify-center gap-1 hover:bg-blue-50 border-2 border-dashed"
                     type="button"
                     disabled={isSubmitting || isRecording}
                   >
                     <Video className="h-6 w-6" />
-                    <span className="text-xs">Enviar Vídeo</span>
+                    <span className="text-xs font-semibold">Enviar Vídeo</span>
                     {promotionSettings?.is_active ? (
                       <div className="text-center">
-                        <span className="text-xs text-green-600 font-semibold line-through">+ R$ 5,00</span>
-                        <span className="text-xs text-orange-600 font-bold block">+ R$ {(5.00 * (1 - (promotionSettings?.discount_percentage || 0) / 100)).toFixed(2)}</span>
-                        <Badge className="bg-orange-500 text-white text-xs animate-bounce">{promotionSettings?.discount_percentage}% OFF</Badge>
+                        <div className="text-xs text-gray-500 line-through">+ R$ 5,00</div>
+                        <div className="text-xs text-blue-600 font-bold">+ R$ {(5.00 * (1 - (promotionSettings?.discount_percentage || 0) / 100)).toFixed(2)}</div>
+                        <Badge className="bg-orange-500 text-white text-xs mt-1">
+                          {promotionSettings?.discount_percentage}% OFF
+                        </Badge>
                       </div>
                     ) : (
                       <span className="text-xs text-blue-600 font-semibold">+ R$ 5,00</span>
