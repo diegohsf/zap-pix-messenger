@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import MessageForm, { MessageData } from '@/components/MessageForm';
 import PaymentModal from '@/components/PaymentModal';
 import Footer from '@/components/Footer';
+import ValentinesTheme from '@/components/ValentinesTheme';
+import ValentinesMessageSuggestions from '@/components/ValentinesMessageSuggestions';
+import RecentMessages from '@/components/RecentMessages';
 import { saveMessage } from '@/services/messageService';
 import { uploadFile } from '@/services/fileUploadService';
 import { useToast } from '@/hooks/use-toast';
@@ -113,14 +116,30 @@ const Index: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col">
-      <div className="flex-grow">
-        <MessageForm 
-          onSubmit={handleFormSubmit} 
-          isSubmitting={isSubmitting}
-        />
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-red-50 to-pink-100 flex flex-col relative">
+      {/* Valentine's Theme Elements */}
+      <ValentinesTheme />
+      
+      <div className="flex-grow relative z-10">
+        <div className="container mx-auto px-4 py-8">
+          {/* Valentine's Message Suggestions */}
+          <ValentinesMessageSuggestions />
+          
+          {/* Main Message Form */}
+          <MessageForm 
+            onSubmit={handleFormSubmit} 
+            isSubmitting={isSubmitting}
+          />
+          
+          {/* Recent Messages with Valentine's styling */}
+          <div className="mt-12">
+            <RecentMessages />
+          </div>
+        </div>
       </div>
+      
       <Footer />
+      
       <PaymentModal
         isOpen={showPaymentModal}
         messageId={currentMessageId}
