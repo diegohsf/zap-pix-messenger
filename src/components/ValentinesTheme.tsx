@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Heart, Sparkles } from 'lucide-react';
+import ValentinesCountdownTimer from './ValentinesCountdownTimer';
 
 const ValentinesTheme: React.FC = () => {
   return (
@@ -29,10 +30,11 @@ const ValentinesTheme: React.FC = () => {
         </div>
         
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 mx-4 md:mx-8 shadow-lg border border-pink-200">
-          <p className="text-xl text-gray-700 mb-2">
-            💕 Faltam apenas <span className="font-bold text-red-500">6 dias</span> para o Dia dos Namorados! 💕
+          <p className="text-xl text-gray-700 mb-4">
+            💕 Falta pouco para o Dia dos Namorados! 💕
           </p>
-          <p className="text-lg text-gray-600">
+          <ValentinesCountdownTimer />
+          <p className="text-lg text-gray-600 mt-2">
             Envie uma mensagem especial e surpreenda quem você ama! 🌹
           </p>
         </div>
