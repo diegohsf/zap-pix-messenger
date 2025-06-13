@@ -9,53 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      blog_posts: {
-        Row: {
-          content: string
-          created_at: string
-          excerpt: string | null
-          id: string
-          image_url: string | null
-          message_id: string | null
-          slug: string
-          status: string
-          title: string
-          updated_at: string
-        }
-        Insert: {
-          content: string
-          created_at?: string
-          excerpt?: string | null
-          id?: string
-          image_url?: string | null
-          message_id?: string | null
-          slug: string
-          status?: string
-          title: string
-          updated_at?: string
-        }
-        Update: {
-          content?: string
-          created_at?: string
-          excerpt?: string | null
-          id?: string
-          image_url?: string | null
-          message_id?: string | null
-          slug?: string
-          status?: string
-          title?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "blog_posts_message_id_fkey"
-            columns: ["message_id"]
-            isOneToOne: false
-            referencedRelation: "messages"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       discount_coupons: {
         Row: {
           code: string
@@ -196,10 +149,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      generate_unique_slug: {
-        Args: { title_text: string }
-        Returns: string
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never
