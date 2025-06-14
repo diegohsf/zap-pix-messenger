@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import MessageForm, { MessageData } from '@/components/MessageForm';
 import PaymentModal from '@/components/PaymentModal';
 import Footer from '@/components/Footer';
+import EnhancedHome from '@/components/EnhancedHome';
 import { saveMessage } from '@/services/messageService';
 import { uploadFile } from '@/services/fileUploadService';
 import { useToast } from '@/hooks/use-toast';
@@ -115,12 +116,33 @@ const Index: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col">
       <div className="flex-grow">
-        <MessageForm 
-          onSubmit={handleFormSubmit} 
-          isSubmitting={isSubmitting}
-        />
+        {/* Enhanced visual home section */}
+        <EnhancedHome />
+        
+        {/* Message form section with better styling */}
+        <div className="py-16 px-6 bg-gradient-to-br from-gray-50 to-white">
+          <div className="max-w-2xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+                Envie sua mensagem
+              </h2>
+              <p className="text-lg text-gray-600">
+                Preencha os campos abaixo e envie sua mensagem anônima
+              </p>
+            </div>
+            
+            <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
+              <MessageForm 
+                onSubmit={handleFormSubmit} 
+                isSubmitting={isSubmitting}
+              />
+            </div>
+          </div>
+        </div>
       </div>
+      
       <Footer />
+      
       <PaymentModal
         isOpen={showPaymentModal}
         messageId={currentMessageId}
