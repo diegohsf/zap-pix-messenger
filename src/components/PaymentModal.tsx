@@ -272,14 +272,14 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             {/* QR Code */}
             {qrCodeUrl && !isLoadingPix && (
               <div className="text-center">
-                <div className="bg-white p-3 rounded-lg border-2 border-dashed border-gray-300 inline-block">
+                <div className="bg-white p-4 rounded-lg border-2 border-dashed border-gray-300 inline-block">
                   <img
                     src={qrCodeUrl}
                     alt="QR Code PIX"
-                    className="w-32 h-32 mx-auto"
+                    className="w-48 h-48 mx-auto"
                   />
                 </div>
-                <p className="text-xs text-gray-600 mt-2">
+                <p className="text-sm text-gray-600 mt-3 font-medium">
                   Escaneie com o app do seu banco
                 </p>
               </div>
