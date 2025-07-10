@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Share2, Copy, ArrowLeft, Smartphone, AlertCircle, Image, Video, Mic } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getMessageByTransactionId, SavedMessage } from '@/services/messageService';
+import { supabase } from '@/integrations/supabase/client';
 
 const ConfirmationPage: React.FC = () => {
   const { transactionId } = useParams();
@@ -25,6 +26,15 @@ const ConfirmationPage: React.FC = () => {
 
     try {
       console.log('Loading message data for transaction:', transactionId);
+      
+      // Se for uma sessão do Stripe, precisamos verificar primeiro
+      if (transactionId.startsWith('cs_')) {
+        console.log('Stripe session detected, verifying payment...');
+        // Este é um session_id do Stripe, vamos verificar o pagamento
+        await verifyStripePayment(transactionId);
+        return;
+      }
+      
       const message = await getMessageByTransactionId(transactionId);
       
       if (!message) {
@@ -43,6 +53,60 @@ const ConfirmationPage: React.FC = () => {
     } catch (error) {
       console.error('Error loading message data:', error);
       setError('Erro ao carregar dados da transação');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const verifyStripePayment = async (sessionId: string) => {
+    try {
+      // Extrair messageId dos parâmetros da URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const messageId = urlParams.get('message_id');
+      
+      if (!messageId) {
+        setError('ID da mensagem não encontrado');
+        setIsLoading(false);
+        return;
+      }
+
+      console.log('Verifying Stripe payment for session:', sessionId, 'message:', messageId);
+
+      const { data, error } = await supabase.functions.invoke('verify-stripe-payment', {
+        body: {
+          sessionId: sessionId,
+          messageId: messageId
+        }
+      });
+
+      if (error) {
+        console.error('Error verifying Stripe payment:', error);
+        throw new Error('Erro ao verificar pagamento');
+      }
+
+      console.log('Stripe payment verification result:', data);
+
+      if (data.success && data.status === 'paid') {
+        // Buscar os dados da mensagem agora que foi confirmada
+        const message = await getMessageByTransactionId(data.transactionId);
+        if (message) {
+          setMessageData(message);
+          // Gerar URL de compartilhamento
+          const currentUrl = window.location.href;
+          setShareUrl(currentUrl);
+          
+          toast({
+            title: "Pagamento confirmado!",
+            description: "Sua mensagem foi enviada com sucesso.",
+          });
+        }
+      } else {
+        setError('Pagamento não foi completado');
+      }
+
+    } catch (error) {
+      console.error('Error verifying Stripe payment:', error);
+      setError('Erro ao verificar pagamento');
     } finally {
       setIsLoading(false);
     }

@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Copy, CheckCircle, Clock, Smartphone, AlertCircle } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Copy, CheckCircle, Clock, Smartphone, AlertCircle, CreditCard, QrCode } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { MessageData } from './MessageForm';
 import { updateMessagePayment, getMessageById } from '@/services/messageService';
@@ -31,12 +32,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const [isLoadingPix, setIsLoadingPix] = useState(false);
   const [pixError, setPixError] = useState<string | null>(null);
   const [chargeId, setChargeId] = useState<string | null>(null);
+  const [isLoadingStripe, setIsLoadingStripe] = useState(false);
+  const [stripeError, setStripeError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'pix' | 'card'>('pix');
   const { toast } = useToast();
 
   useEffect(() => {
     if (isOpen && messageData && messageId) {
-      generatePixCharge();
-
       // Timer de 15 minutos
       const timer = setInterval(() => {
         setTimeLeft((prev) => {
@@ -161,6 +163,55 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     }
   };
 
+  const createStripeCheckout = async () => {
+    if (!messageData || !messageId) return;
+
+    setIsLoadingStripe(true);
+    setStripeError(null);
+
+    try {
+      console.log('Creating Stripe checkout for message:', messageId);
+
+      const { data, error } = await supabase.functions.invoke('create-stripe-checkout', {
+        body: {
+          messageId,
+          amount: messageData.price,
+          description: `Zap Elegante - ${messageData.mediaType === 'none' ? 'Mensagem de texto' : `Mensagem com ${messageData.mediaType}`}`,
+          phoneNumber: messageData.phoneNumber
+        }
+      });
+
+      if (error) {
+        console.error('Error creating Stripe checkout:', error);
+        throw new Error('Erro ao criar checkout');
+      }
+
+      console.log('Stripe checkout created:', data);
+
+      // Redirecionar para o Stripe Checkout em nova aba
+      if (data.url) {
+        window.open(data.url, '_blank');
+        
+        toast({
+          title: "Redirecionado para o pagamento",
+          description: "Complete o pagamento na nova aba aberta.",
+        });
+      }
+
+    } catch (error) {
+      console.error('Error creating Stripe checkout:', error);
+      setStripeError(error instanceof Error ? error.message : 'Erro ao criar checkout');
+      
+      toast({
+        title: "Erro ao processar cartão",
+        description: "Não foi possível processar o pagamento com cartão. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingStripe(false);
+    }
+  };
+
   const copyPixCode = () => {
     navigator.clipboard.writeText(pixCode);
     toast({
@@ -183,7 +234,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         {/* Header fixo */}
         <DialogHeader className="p-4 pb-3 border-b bg-white">
           <DialogTitle className="text-center text-lg font-bold text-gray-800 pr-8">
-            Pagamento via PIX
+            Escolha a forma de pagamento
           </DialogTitle>
         </DialogHeader>
 
@@ -225,126 +276,205 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               <span className="text-xs">restantes</span>
             </div>
 
-            {/* Loading ou Erro */}
-            {isLoadingPix && (
-              <Card className="bg-blue-50 border-blue-200">
-                <CardContent className="p-3">
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
-                    <div>
-                      <p className="text-sm font-medium text-blue-800">
-                        Gerando PIX...
-                      </p>
-                      <p className="text-xs text-blue-600">
-                        Aguarde um momento
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            {/* Tabs para escolher método de pagamento */}
+            <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'pix' | 'card')} className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="pix" className="flex items-center gap-2">
+                  <QrCode className="h-4 w-4" />
+                  PIX
+                </TabsTrigger>
+                <TabsTrigger value="card" className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  Cartão
+                </TabsTrigger>
+              </TabsList>
 
-            {pixError && (
-              <Card className="bg-red-50 border-red-200">
-                <CardContent className="p-3">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5 text-red-500" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-red-800">
-                        Erro ao gerar PIX
-                      </p>
-                      <p className="text-xs text-red-600">
-                        {pixError}
-                      </p>
-                    </div>
-                  </div>
-                  <Button 
-                    onClick={generatePixCharge}
-                    variant="outline"
-                    className="w-full mt-2 text-xs h-8"
-                  >
-                    Tentar novamente
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
+              <TabsContent value="pix" className="space-y-4 mt-4">
 
-            {/* QR Code */}
-            {qrCodeUrl && !isLoadingPix && (
-              <div className="text-center">
-                <div className="bg-white p-4 rounded-lg border-2 border-dashed border-gray-300 inline-block">
-                  <img
-                    src={qrCodeUrl}
-                    alt="QR Code PIX"
-                    className="w-48 h-48 mx-auto"
-                  />
-                </div>
-                <p className="text-sm text-gray-600 mt-3 font-medium">
-                  Escaneie com o app do seu banco
-                </p>
-              </div>
-            )}
+                {/* Loading ou Erro PIX */}
+                {isLoadingPix && (
+                  <Card className="bg-blue-50 border-blue-200">
+                    <CardContent className="p-3">
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                        <div>
+                          <p className="text-sm font-medium text-blue-800">
+                            Gerando PIX...
+                          </p>
+                          <p className="text-xs text-blue-600">
+                            Aguarde um momento
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
 
-            {/* Código PIX */}
-            {pixCode && !isLoadingPix && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Ou copie o código PIX:
-                </label>
-                <div className="bg-gray-100 p-3 rounded-lg">
-                  <div className="text-xs font-mono break-all text-gray-800 mb-3 max-h-20 overflow-y-auto">
-                    {pixCode}
-                  </div>
+                {/* Botão para gerar PIX */}
+                {!pixCode && !isLoadingPix && (
                   <Button
-                    onClick={copyPixCode}
-                    variant="outline"
-                    className="w-full flex items-center gap-2 h-9 text-sm"
+                    onClick={generatePixCharge}
+                    className="w-full flex items-center gap-2 h-12"
+                    disabled={isLoadingPix}
                   >
-                    <Copy className="h-3 w-3" />
-                    Copiar código PIX
+                    <QrCode className="h-5 w-5" />
+                    Gerar PIX
                   </Button>
-                </div>
-              </div>
-            )}
+                )}
 
-            {/* Status */}
-            {pixCode && !isLoadingPix && (
-              <Card className="bg-blue-50 border-blue-200">
-                <CardContent className="p-3">
-                  <div className="flex items-center gap-2">
-                    <div className="animate-pulse">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                {pixError && (
+                  <Card className="bg-red-50 border-red-200">
+                    <CardContent className="p-3">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-5 w-5 text-red-500" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-red-800">
+                            Erro ao gerar PIX
+                          </p>
+                          <p className="text-xs text-red-600">
+                            {pixError}
+                          </p>
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={generatePixCharge}
+                        variant="outline"
+                        className="w-full mt-2 text-xs h-8"
+                      >
+                        Tentar novamente
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* QR Code PIX */}
+                {qrCodeUrl && !isLoadingPix && (
+                  <div className="text-center">
+                    <div className="bg-white p-4 rounded-lg border-2 border-dashed border-gray-300 inline-block">
+                      <img
+                        src={qrCodeUrl}
+                        alt="QR Code PIX"
+                        className="w-48 h-48 mx-auto"
+                      />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-blue-800">
-                        Aguardando pagamento...
-                      </p>
-                      <p className="text-xs text-blue-600">
-                        Você será redirecionado automaticamente
-                      </p>
+                    <p className="text-sm text-gray-600 mt-3 font-medium">
+                      Escaneie com o app do seu banco
+                    </p>
+                  </div>
+                )}
+
+                {/* Código PIX */}
+                {pixCode && !isLoadingPix && (
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">
+                      Ou copie o código PIX:
+                    </label>
+                    <div className="bg-gray-100 p-3 rounded-lg">
+                      <div className="text-xs font-mono break-all text-gray-800 mb-3 max-h-20 overflow-y-auto">
+                        {pixCode}
+                      </div>
+                      <Button
+                        onClick={copyPixCode}
+                        variant="outline"
+                        className="w-full flex items-center gap-2 h-9 text-sm"
+                      >
+                        <Copy className="h-3 w-3" />
+                        Copiar código PIX
+                      </Button>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                )}
 
-            {/* Instruções */}
-            {pixCode && !isLoadingPix && (
-              <div className="text-xs text-gray-600 space-y-2 pb-4">
-                <div className="flex items-start gap-2">
-                  <Smartphone className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                  <p>Abra o app do seu banco e selecione PIX</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                  <p>Escaneie o QR Code ou cole o código</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                  <p>Confirme o pagamento de R$ {messageData.price.toFixed(2)}</p>
-                </div>
-              </div>
-            )}
+                {/* Status PIX */}
+                {pixCode && !isLoadingPix && (
+                  <Card className="bg-blue-50 border-blue-200">
+                    <CardContent className="p-3">
+                      <div className="flex items-center gap-2">
+                        <div className="animate-pulse">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-blue-800">
+                            Aguardando pagamento...
+                          </p>
+                          <p className="text-xs text-blue-600">
+                            Você será redirecionado automaticamente
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Instruções PIX */}
+                {pixCode && !isLoadingPix && (
+                  <div className="text-xs text-gray-600 space-y-2 pb-4">
+                    <div className="flex items-start gap-2">
+                      <Smartphone className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                      <p>Abra o app do seu banco e selecione PIX</p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <CheckCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                      <p>Escaneie o QR Code ou cole o código</p>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <CheckCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                      <p>Confirme o pagamento de R$ {messageData.price.toFixed(2)}</p>
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="card" className="space-y-4 mt-4">
+                {/* Seção de Cartão */}
+                <Card className="bg-blue-50 border-blue-200">
+                  <CardContent className="p-4 text-center">
+                    <CreditCard className="h-12 w-12 mx-auto mb-3 text-blue-600" />
+                    <h3 className="font-semibold text-blue-800 mb-2">Pagamento com Cartão</h3>
+                    <p className="text-sm text-blue-600 mb-4">
+                      Você será redirecionado para o Stripe em uma nova aba para completar o pagamento com segurança.
+                    </p>
+                    
+                    {/* Loading Stripe */}
+                    {isLoadingStripe && (
+                      <div className="flex items-center justify-center gap-2 mb-4">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                        <span className="text-sm text-blue-700">Processando...</span>
+                      </div>
+                    )}
+
+                    {/* Erro Stripe */}
+                    {stripeError && (
+                      <Card className="bg-red-50 border-red-200 mb-4">
+                        <CardContent className="p-3">
+                          <div className="flex items-center gap-2">
+                            <AlertCircle className="h-4 w-4 text-red-500" />
+                            <p className="text-sm text-red-800">{stripeError}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Botão de Pagamento com Cartão */}
+                    <Button
+                      onClick={createStripeCheckout}
+                      disabled={isLoadingStripe}
+                      className="w-full flex items-center gap-2 h-12"
+                    >
+                      <CreditCard className="h-5 w-5" />
+                      {isLoadingStripe ? 'Processando...' : 'Pagar com Cartão'}
+                    </Button>
+
+                    {/* Informações de segurança */}
+                    <div className="mt-4 text-xs text-gray-600 space-y-1">
+                      <p>🔒 Pagamento seguro via Stripe</p>
+                      <p>💳 Aceitamos Visa, Mastercard e Elo</p>
+                      <p>✅ Aprovação instantânea</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </div>
         </ScrollArea>
       </DialogContent>

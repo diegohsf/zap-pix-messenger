@@ -132,6 +132,12 @@ verify_jwt = false
 [functions.openpix-webhook]
 verify_jwt = false
 
+[functions.create-stripe-checkout]
+verify_jwt = false
+
+[functions.verify-stripe-payment]
+verify_jwt = false
+
 [analytics]
 enabled = false
 port = 54327
