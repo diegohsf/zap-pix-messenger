@@ -330,7 +330,7 @@ const ConfirmationPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between">
                   <span>Método:</span>
-                  <span>PIX</span>
+                  <span>{messageData.transaction_id?.startsWith('STRIPE_') ? 'Cartão' : 'PIX'}</span>
                 </div>
               </div>
             </div>

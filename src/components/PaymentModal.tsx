@@ -113,9 +113,14 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
     setIsLoadingPix(true);
     setPixError(null);
+    
+    // Limpar PIX anterior se existir
+    setPixCode('');
+    setQrCodeUrl('');
+    setChargeId(null);
 
     try {
-      console.log('Generating PIX charge for message:', messageId);
+      console.log('Generating PIX charge for message:', messageId, 'with amount:', messageData.price);
 
       const { data, error } = await supabase.functions.invoke('create-pix-charge', {
         body: {

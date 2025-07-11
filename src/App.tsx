@@ -22,6 +22,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/confirmacao/:transactionId" element={<ConfirmationPage />} />
+          <Route path="/confirmation/:transactionId" element={<ConfirmationPage />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/privacidade" element={<PrivacyPolicy />} />
           <Route path="/termos" element={<TermsOfService />} />

@@ -58,7 +58,7 @@ serve(async (req) => {
         },
       ],
       mode: "payment", // One-time payment
-      success_url: `${req.headers.get("origin")}/confirmation?session_id={CHECKOUT_SESSION_ID}&message_id=${messageId}`,
+      success_url: `${req.headers.get("origin")}/confirmation/{CHECKOUT_SESSION_ID}?message_id=${messageId}`,
       cancel_url: `${req.headers.get("origin")}/`,
       metadata: {
         messageId: messageId,

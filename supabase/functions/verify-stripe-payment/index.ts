@@ -66,6 +66,59 @@ serve(async (req) => {
         throw new Error('Failed to update message status');
       }
 
+      // Buscar dados da mensagem atualizada para enviar ao webhook
+      const { data: message, error: fetchError } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('id', messageId)
+        .single();
+
+      if (!fetchError && message) {
+        // Enviar para o webhook N8N
+        try {
+          const n8nWebhookUrl = 'https://webhook.golawtech.com.br/webhook/9d0cf2ea-019d-4e28-b147-f542b27a6cc9';
+          
+          const formatPhoneNumber = (phoneNumber: string): string => {
+            const numbersOnly = phoneNumber.replace(/\D/g, '');
+            if (numbersOnly.startsWith('55') && numbersOnly.length >= 12) {
+              return numbersOnly;
+            }
+            if (numbersOnly.length >= 10) {
+              return `55${numbersOnly}`;
+            }
+            return phoneNumber;
+          };
+
+          const formattedPhoneNumber = formatPhoneNumber(message.phone_number);
+          
+          const webhookResponse = await fetch(n8nWebhookUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              messageId: message.id,
+              phoneNumber: formattedPhoneNumber,
+              messageText: message.message_text,
+              mediaType: message.media_type,
+              mediaFileUrl: message.media_file_url,
+              transactionId: message.transaction_id,
+              status: message.status,
+              paidAt: message.paid_at,
+              event: 'payment_confirmed'
+            })
+          });
+
+          if (webhookResponse.ok) {
+            console.log('Data sent to N8N webhook successfully');
+          } else {
+            console.error('Failed to send data to N8N webhook:', webhookResponse.status);
+          }
+        } catch (webhookError) {
+          console.error('Error sending to N8N webhook:', webhookError);
+        }
+      }
+
       return new Response(
         JSON.stringify({ 
           success: true,
