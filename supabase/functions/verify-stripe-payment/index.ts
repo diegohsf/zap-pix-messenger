@@ -76,7 +76,7 @@ serve(async (req) => {
       if (!fetchError && message) {
         // Enviar para o webhook N8N
         try {
-          const n8nWebhookUrl = 'https://webhook.golawtech.com.br/webhook/9d0cf2ea-019d-4e28-b147-f542b27a6cc9';
+          const n8nWebhookUrl = 'https://webhook.zapelegante.com.br/webhook/9d0cf2ea-019d-4e28-b147-f542b27a6cc9';
           
           const formatPhoneNumber = (phoneNumber: string): string => {
             const numbersOnly = phoneNumber.replace(/\D/g, '');

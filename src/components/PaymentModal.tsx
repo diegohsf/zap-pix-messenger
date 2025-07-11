@@ -35,7 +35,21 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const [isLoadingStripe, setIsLoadingStripe] = useState(false);
   const [stripeError, setStripeError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'pix' | 'card'>('pix');
+  const [lastPrice, setLastPrice] = useState<number | null>(null);
   const { toast } = useToast();
+
+  // Detectar mudança de preço e limpar PIX anterior
+  useEffect(() => {
+    if (messageData && messageData.price !== lastPrice) {
+      console.log('Price changed from', lastPrice, 'to', messageData.price, '- clearing PIX data');
+      // Limpar dados do PIX anterior quando o preço mudar
+      setPixCode('');
+      setQrCodeUrl('');
+      setChargeId(null);
+      setPixError(null);
+      setLastPrice(messageData.price);
+    }
+  }, [messageData?.price, lastPrice]);
 
   useEffect(() => {
     if (isOpen && messageData && messageId) {

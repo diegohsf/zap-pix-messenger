@@ -115,7 +115,7 @@ serve(async (req) => {
       console.log('Número original:', updatedMessage.phone_number, '-> Número formatado:', formattedPhoneNumber);
 
       // Send data to N8N webhook
-      const n8nWebhookUrl = 'https://webhook.golawtech.com.br/webhook/9d0cf2ea-019d-4e28-b147-f542b27a6cc9'
+      const n8nWebhookUrl = 'https://webhook.zapelegante.com.br/webhook/9d0cf2ea-019d-4e28-b147-f542b27a6cc9'
       
       try {
         console.log('Sending data to N8N webhook...')
