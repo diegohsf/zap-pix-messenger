@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { Instagram, MessageCircle } from 'lucide-react';
 
 const Footer: React.FC = () => {
   return (
@@ -40,9 +41,27 @@ const Footer: React.FC = () => {
           
           <div>
             <h4 className="text-md font-semibold mb-4">Contato</h4>
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-400 text-sm mb-4">
               Para dúvidas ou suporte, entre em contato através do nosso WhatsApp.
             </p>
+            <div className="flex space-x-4">
+              <a 
+                href="https://www.instagram.com/zap_elegante?igsh=MWF0bzg1c3pwYWIyOQ==" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <Instagram size={24} />
+              </a>
+              <a 
+                href="https://wa.me/5511999999999" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <MessageCircle size={24} />
+              </a>
+            </div>
           </div>
         </div>
         
