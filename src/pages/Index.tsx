@@ -113,12 +113,14 @@ const Index: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col relative overflow-hidden">
-      {/* Background effects */}
-      <div className="absolute inset-0 opacity-50">
-        <div className="absolute top-20 left-10 w-72 h-72 gradient-primary rounded-full mix-blend-multiply filter blur-xl animate-float"></div>
-        <div className="absolute top-40 right-10 w-72 h-72 bg-gradient-to-r from-blue-400 to-purple-600 rounded-full mix-blend-multiply filter blur-xl animate-float" style={{animationDelay: '2s'}}></div>
-        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-gradient-to-r from-pink-400 to-red-600 rounded-full mix-blend-multiply filter blur-xl animate-float" style={{animationDelay: '4s'}}></div>
+    <div className="min-h-screen flex flex-col relative">
+      {/* Hero Section Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-green-50 -z-10"></div>
+      
+      {/* Subtle background shapes */}
+      <div className="absolute inset-0 overflow-hidden -z-5">
+        <div className="absolute top-20 left-10 w-96 h-96 bg-gradient-to-r from-green-200/30 to-blue-200/30 rounded-full filter blur-3xl animate-float"></div>
+        <div className="absolute bottom-20 right-10 w-72 h-72 bg-gradient-to-r from-blue-200/30 to-purple-200/30 rounded-full filter blur-3xl animate-float" style={{animationDelay: '3s'}}></div>
       </div>
       
       <div className="flex-grow relative z-10">

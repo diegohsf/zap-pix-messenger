@@ -333,18 +333,41 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
   };
 
   return (
-    <div className="min-h-screen py-8 px-4">
-      <div className="max-w-2xl mx-auto">
-        <div className="text-center mb-8 animate-fade-in">
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section className="py-16 px-4 text-center">
+        <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-center mb-6">
-            <div className="gradient-primary p-4 rounded-2xl glow-effect animate-float">
-              <MessageSquare className="h-10 w-10 text-white" />
+            <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-2xl shadow-lg animate-float">
+              <MessageSquare className="h-12 w-12 text-white" />
             </div>
           </div>
-          <h1 className="text-5xl font-bold gradient-text mb-3">Zap Elegante</h1>
-          <p className="text-xl text-muted-foreground">Envie mensagens no WhatsApp sem se identificar</p>
-          <div className="w-24 h-1 gradient-primary mx-auto mt-4 rounded-full"></div>
+          <h1 className="text-6xl font-bold text-gray-900 mb-4">
+            Zap <span className="bg-gradient-to-r from-green-500 to-green-600 bg-clip-text text-transparent">Elegante</span>
+          </h1>
+          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+            Envie mensagens no WhatsApp de forma anônima e elegante. Rápido, seguro e sem complicações.
+          </p>
+          <div className="flex items-center justify-center gap-6 text-gray-500 text-sm">
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              <span>100% Anônimo</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              <span>Entrega Garantida</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-500" />
+              <span>Suporte a Mídia</span>
+            </div>
+          </div>
         </div>
+      </section>
+
+      {/* Main Form Section */}
+      <section className="py-8 px-4">
+        <div className="max-w-2xl mx-auto">
 
         {/* Promotion Banner */}
         <PromotionBanner 
@@ -352,29 +375,28 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
           discountPercentage={promotionSettings?.discount_percentage || 50} 
         />
 
-        <Card className="glass-card border-0 mb-8 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent"></div>
-          <CardHeader className="text-center pb-6 relative">
-            <CardTitle className="text-3xl font-bold text-foreground flex items-center justify-center gap-3">
-              <Phone className="h-7 w-7 text-primary" />
-              Envie um WhatsApp sem se identificar
+        <Card className="bg-white shadow-2xl border-0 mb-8 overflow-hidden rounded-2xl">
+          <CardHeader className="text-center pb-6 bg-gradient-to-r from-green-50 to-blue-50">
+            <CardTitle className="text-2xl font-bold text-gray-900 flex items-center justify-center gap-3">
+              <Phone className="h-6 w-6 text-green-600" />
+              Envie sua mensagem agora
             </CardTitle>
-            <div className="w-16 h-1 gradient-primary mx-auto mt-3 rounded-full"></div>
+            <p className="text-gray-600 mt-2">Preencha os campos abaixo para enviar sua mensagem</p>
           </CardHeader>
 
-          <CardContent className="space-y-8 relative">
-            <Alert className="border-amber-300/50 bg-gradient-to-r from-amber-50/80 to-orange-50/80 glass-card">
-              <AlertDescription className="text-amber-900 font-medium">
+          <CardContent className="space-y-8 p-8">
+            <Alert className="border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl">
+              <AlertDescription className="text-amber-800 font-medium">
                 <strong>⚠️ Atenção:</strong> Se você digitar o número de telefone errado, a 
                 mensagem <strong>não será entregue</strong> e <strong>não haverá reembolso</strong>.
               </AlertDescription>
             </Alert>
 
             <div className="space-y-3">
-              <label className="text-sm font-semibold text-foreground">
-                📱 Lembre-se do DDD
+              <label className="text-sm font-semibold text-gray-900">
+                📱 Número do WhatsApp
               </label>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-gray-600">
                 Sempre inclua o <strong>DDD</strong> do número antes de enviar a mensagem.
               </p>
               <div className="relative group">
@@ -382,31 +404,31 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   placeholder="(11) 99999-9999"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(formatPhoneNumber(e.target.value))}
-                  className="pl-12 text-lg h-14 glass-card border-primary/20 focus:border-primary/50 focus:ring-primary/30 transition-all duration-300"
+                  className="pl-12 text-lg h-14 bg-gray-50 border-gray-200 focus:border-green-500 focus:ring-green-200 transition-all duration-300 rounded-xl"
                   disabled={isSubmitting}
                   inputMode="numeric"
                 />
-                <Phone className="absolute left-4 top-4 h-6 w-6 text-primary transition-colors group-focus-within:text-primary" />
+                <Phone className="absolute left-4 top-4 h-6 w-6 text-green-600 transition-colors group-focus-within:text-green-700" />
               </div>
             </div>
 
             <div className="space-y-3">
-              <label className="text-sm font-semibold text-foreground">💬 Mensagem</label>
+              <label className="text-sm font-semibold text-gray-900">💬 Sua mensagem</label>
               <Textarea
                 placeholder="Digite sua mensagem..."
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="min-h-32 text-base glass-card border-primary/20 focus:border-primary/50 focus:ring-primary/30 transition-all duration-300 resize-none"
+                className="min-h-32 text-base bg-gray-50 border-gray-200 focus:border-green-500 focus:ring-green-200 transition-all duration-300 resize-none rounded-xl"
                 maxLength={1000}
                 disabled={isSubmitting}
               />
-              <div className="text-xs text-muted-foreground text-right">
+              <div className="text-xs text-gray-500 text-right">
                 <span className={message.length > 800 ? 'text-amber-500' : ''}>{message.length}</span>/1000 caracteres
               </div>
             </div>
 
             <div className="space-y-4">
-              <label className="text-sm font-semibold text-foreground">
+              <label className="text-sm font-semibold text-gray-900">
                 📎 Anexos (opcional)
               </label>
               
@@ -423,12 +445,12 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   />
                   <Button
                     variant="outline"
-                    className="w-full h-24 flex flex-col items-center justify-center gap-2 glass-card border-primary/30 hover:border-primary/60 hover:bg-primary/5 border-2 border-dashed transition-all duration-300 group"
+                    className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-white border-gray-200 hover:border-green-300 hover:bg-green-50 border-2 border-dashed transition-all duration-300 group rounded-xl"
                     type="button"
                     disabled={isSubmitting || isRecording}
                   >
-                    <Image className="h-7 w-7 text-primary group-hover:scale-110 transition-transform" />
-                    <span className="text-sm font-medium">Enviar Foto</span>
+                    <Image className="h-7 w-7 text-green-600 group-hover:scale-110 transition-transform" />
+                    <span className="text-sm font-medium text-gray-700">Enviar Foto</span>
                     {promotionSettings?.is_active ? (
                       <div className="text-center">
                         <span className="text-xs text-green-600 font-semibold line-through">+ R$ 5,00</span>
@@ -667,7 +689,8 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
         <div className="mt-8">
           <RecentMessages />
         </div>
-      </div>
+        </div>
+      </section>
     </div>
   );
 };
