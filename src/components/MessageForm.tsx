@@ -333,16 +333,17 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-8 px-4">
+    <div className="min-h-screen py-8 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="text-center mb-8 animate-fade-in">
-          <div className="flex items-center justify-center mb-4">
-            <div className="bg-primary p-3 rounded-full">
-              <MessageSquare className="h-8 w-8 text-white" />
+          <div className="flex items-center justify-center mb-6">
+            <div className="gradient-primary p-4 rounded-2xl glow-effect animate-float">
+              <MessageSquare className="h-10 w-10 text-white" />
             </div>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Zap Elegante</h1>
-          <p className="text-lg text-gray-600">Envie mensagens no WhatsApp sem se identificar</p>
+          <h1 className="text-5xl font-bold gradient-text mb-3">Zap Elegante</h1>
+          <p className="text-xl text-muted-foreground">Envie mensagens no WhatsApp sem se identificar</p>
+          <div className="w-24 h-1 gradient-primary mx-auto mt-4 rounded-full"></div>
         </div>
 
         {/* Promotion Banner */}
@@ -351,60 +352,62 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
           discountPercentage={promotionSettings?.discount_percentage || 50} 
         />
 
-        <Card className="shadow-xl border-0 bg-white/80 backdrop-blur-sm mb-8">
-          <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl text-gray-800 flex items-center justify-center gap-2">
-              <Phone className="h-6 w-6 text-primary" />
+        <Card className="glass-card border-0 mb-8 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent"></div>
+          <CardHeader className="text-center pb-6 relative">
+            <CardTitle className="text-3xl font-bold text-foreground flex items-center justify-center gap-3">
+              <Phone className="h-7 w-7 text-primary" />
               Envie um WhatsApp sem se identificar
             </CardTitle>
+            <div className="w-16 h-1 gradient-primary mx-auto mt-3 rounded-full"></div>
           </CardHeader>
 
-          <CardContent className="space-y-6">
-            <Alert className="border-orange-200 bg-orange-50">
-              <AlertDescription className="text-orange-800">
-                <strong>Atenção:</strong> Se você digitar o número de telefone errado, a 
+          <CardContent className="space-y-8 relative">
+            <Alert className="border-amber-300/50 bg-gradient-to-r from-amber-50/80 to-orange-50/80 glass-card">
+              <AlertDescription className="text-amber-900 font-medium">
+                <strong>⚠️ Atenção:</strong> Se você digitar o número de telefone errado, a 
                 mensagem <strong>não será entregue</strong> e <strong>não haverá reembolso</strong>.
               </AlertDescription>
             </Alert>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">
-                Lembre-se do DDD
+            <div className="space-y-3">
+              <label className="text-sm font-semibold text-foreground">
+                📱 Lembre-se do DDD
               </label>
-              <p className="text-xs text-gray-600">
+              <p className="text-sm text-muted-foreground">
                 Sempre inclua o <strong>DDD</strong> do número antes de enviar a mensagem.
               </p>
-              <div className="relative">
+              <div className="relative group">
                 <Input
                   placeholder="(11) 99999-9999"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(formatPhoneNumber(e.target.value))}
-                  className="pl-10 text-lg h-12"
+                  className="pl-12 text-lg h-14 glass-card border-primary/20 focus:border-primary/50 focus:ring-primary/30 transition-all duration-300"
                   disabled={isSubmitting}
                   inputMode="numeric"
                 />
-                <Phone className="absolute left-3 top-3 h-6 w-6 text-gray-400" />
+                <Phone className="absolute left-4 top-4 h-6 w-6 text-primary transition-colors group-focus-within:text-primary" />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Mensagem</label>
+            <div className="space-y-3">
+              <label className="text-sm font-semibold text-foreground">💬 Mensagem</label>
               <Textarea
                 placeholder="Digite sua mensagem..."
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="min-h-24 text-base"
+                className="min-h-32 text-base glass-card border-primary/20 focus:border-primary/50 focus:ring-primary/30 transition-all duration-300 resize-none"
                 maxLength={1000}
                 disabled={isSubmitting}
               />
-              <div className="text-xs text-gray-500 text-right">
-                {message.length}/1000 caracteres
+              <div className="text-xs text-muted-foreground text-right">
+                <span className={message.length > 800 ? 'text-amber-500' : ''}>{message.length}</span>/1000 caracteres
               </div>
             </div>
 
             <div className="space-y-4">
-              <label className="text-sm font-medium text-gray-700">
-                Anexos (opcional)
+              <label className="text-sm font-semibold text-foreground">
+                📎 Anexos (opcional)
               </label>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -420,12 +423,12 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   />
                   <Button
                     variant="outline"
-                    className="w-full h-20 flex flex-col items-center justify-center gap-2 hover:bg-green-50 border-2 border-dashed"
+                    className="w-full h-24 flex flex-col items-center justify-center gap-2 glass-card border-primary/30 hover:border-primary/60 hover:bg-primary/5 border-2 border-dashed transition-all duration-300 group"
                     type="button"
                     disabled={isSubmitting || isRecording}
                   >
-                    <Image className="h-6 w-6" />
-                    <span className="text-xs">Enviar Foto</span>
+                    <Image className="h-7 w-7 text-primary group-hover:scale-110 transition-transform" />
+                    <span className="text-sm font-medium">Enviar Foto</span>
                     {promotionSettings?.is_active ? (
                       <div className="text-center">
                         <span className="text-xs text-green-600 font-semibold line-through">+ R$ 5,00</span>
@@ -467,12 +470,12 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                   />
                   <Button
                     variant="outline"
-                    className="w-full h-20 flex flex-col items-center justify-center gap-2 hover:bg-blue-50 border-2 border-dashed"
+                    className="w-full h-24 flex flex-col items-center justify-center gap-2 glass-card border-primary/30 hover:border-primary/60 hover:bg-primary/5 border-2 border-dashed transition-all duration-300 group"
                     type="button"
                     disabled={isSubmitting || isRecording}
                   >
-                    <Video className="h-6 w-6" />
-                    <span className="text-xs">Enviar Vídeo</span>
+                    <Video className="h-7 w-7 text-primary group-hover:scale-110 transition-transform" />
+                    <span className="text-sm font-medium">Enviar Vídeo</span>
                     {promotionSettings?.is_active ? (
                       <div className="text-center">
                         <span className="text-xs text-green-600 font-semibold line-through">+ R$ 5,00</span>
@@ -487,36 +490,38 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
               </div>
 
               {mediaType !== 'none' && (
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    {mediaType === 'photo' && <Image className="h-5 w-5 text-green-600" />}
+                <div className="flex items-center justify-between p-4 glass-card border border-primary/20 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    {mediaType === 'photo' && <Image className="h-6 w-6 text-primary" />}
                     {mediaType === 'audio' && (
                       <div className="flex items-center gap-2">
-                        <Mic className="h-5 w-5 text-green-600" />
+                        <Mic className="h-6 w-6 text-primary" />
                         {recordedAudio && (
-                          <span className="text-xs text-green-700">
+                          <span className="text-sm text-primary/80 font-medium">
                             ({Math.floor(recordedAudio.duration)}s)
                           </span>
                         )}
                       </div>
                     )}
-                    {mediaType === 'video' && <Video className="h-5 w-5 text-green-600" />}
-                    <span className="text-sm text-green-800 capitalize">
-                      {mediaType === 'photo' ? 'Foto' : 
-                       mediaType === 'audio' ? 'Áudio' : 
-                       'Vídeo'} selecionado
-                    </span>
-                    {mediaFile && (
-                      <span className="text-xs text-green-600">
-                        ({(mediaFile.size / 1024 / 1024).toFixed(1)} MB)
+                    {mediaType === 'video' && <Video className="h-6 w-6 text-primary" />}
+                    <div>
+                      <span className="text-sm font-semibold text-foreground capitalize">
+                        {mediaType === 'photo' ? 'Foto' : 
+                         mediaType === 'audio' ? 'Áudio' : 
+                         'Vídeo'} selecionado
                       </span>
-                    )}
+                      {mediaFile && (
+                        <div className="text-xs text-muted-foreground">
+                          {(mediaFile.size / 1024 / 1024).toFixed(1)} MB
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={clearMedia}
-                    className="text-red-600 hover:text-red-800"
+                    className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
                     disabled={isSubmitting}
                   >
                     Remover
@@ -532,10 +537,10 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
               )}
             </div>
 
-            <div className={`p-4 rounded-lg ${promotionSettings?.is_active ? 'bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200' : 'bg-gray-50'}`}>
+            <div className={`p-6 rounded-xl glass-card border ${promotionSettings?.is_active ? 'border-orange-300/50 bg-gradient-to-r from-orange-50/80 to-red-50/80' : 'border-primary/20'}`}>
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-gray-700">
-                  Preço por mensagem:
+                <span className="text-base font-semibold text-foreground">
+                  💰 Preço por mensagem:
                 </span>
                 <div className="flex items-center gap-2">
                   {appliedCoupon?.isValid && (
@@ -650,7 +655,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
             <Button
               onClick={handleSubmit}
               disabled={isSubmitting || isRecording}
-              className="w-full h-14 text-lg font-semibold bg-primary hover:bg-primary-hover"
+              className="w-full h-16 text-xl font-bold gradient-primary glow-effect hover:scale-[1.02] transition-all duration-300 text-white"
             >
               {getButtonText()}
             </Button>
