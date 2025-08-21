@@ -115,10 +115,10 @@ const Index: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col relative">
       {/* Hero Section Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-green-50 -z-10"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-green-50 -z-10 pointer-events-none"></div>
       
       {/* Subtle background shapes */}
-      <div className="absolute inset-0 overflow-hidden -z-5">
+      <div className="absolute inset-0 overflow-hidden -z-10 pointer-events-none">
         <div className="absolute top-20 left-10 w-96 h-96 bg-gradient-to-r from-green-200/30 to-blue-200/30 rounded-full filter blur-3xl animate-float"></div>
         <div className="absolute bottom-20 right-10 w-72 h-72 bg-gradient-to-r from-blue-200/30 to-purple-200/30 rounded-full filter blur-3xl animate-float" style={{animationDelay: '3s'}}></div>
       </div>
