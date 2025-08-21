@@ -66,6 +66,51 @@ const FAQ: React.FC = () => {
               um QR Code para pagamento via PIX. O pagamento é processado instantaneamente.
             </AccordionContent>
           </AccordionItem>
+          
+          <AccordionItem value="item-7">
+            <AccordionTrigger>O serviço é confiável e seguro?</AccordionTrigger>
+            <AccordionContent>
+              Sim, nosso serviço é totalmente seguro e confiável. Utilizamos criptografia 
+              para proteger suas informações e não armazenamos dados pessoais sensíveis. 
+              Todas as mensagens são processadas automaticamente sem intervenção humana.
+            </AccordionContent>
+          </AccordionItem>
+          
+          <AccordionItem value="item-8">
+            <AccordionTrigger>Posso cancelar uma mensagem após o pagamento?</AccordionTrigger>
+            <AccordionContent>
+              Uma vez confirmado o pagamento, a mensagem entra automaticamente na fila de envio 
+              e não pode ser cancelada. Por isso é importante revisar cuidadosamente todos os 
+              dados antes de finalizar o pagamento.
+            </AccordionContent>
+          </AccordionItem>
+          
+          <AccordionItem value="item-9">
+            <AccordionTrigger>Há limite de caracteres para as mensagens?</AccordionTrigger>
+            <AccordionContent>
+              Sim, o WhatsApp possui limite de caracteres por mensagem. Recomendamos mensagens 
+              de até 4.096 caracteres para garantir que sejam enviadas corretamente. 
+              Mensagens muito longas podem ser cortadas.
+            </AccordionContent>
+          </AccordionItem>
+          
+          <AccordionItem value="item-10">
+            <AccordionTrigger>O que acontece se o número estiver bloqueado?</AccordionTrigger>
+            <AccordionContent>
+              Se o número do destinatário nos tiver bloqueado ou não aceitar mensagens de 
+              números desconhecidos, a mensagem não será entregue. Infelizmente, não temos 
+              como contornar essas configurações de privacidade do WhatsApp.
+            </AccordionContent>
+          </AccordionItem>
+          
+          <AccordionItem value="item-11">
+            <AccordionTrigger>Vocês oferecem suporte ao cliente?</AccordionTrigger>
+            <AccordionContent>
+              Sim! Temos suporte via WhatsApp e Instagram. Você pode nos contatar através 
+              dos ícones no rodapé da página. Respondemos rapidamente durante horário comercial 
+              e estamos sempre dispostos a ajudar com suas dúvidas.
+            </AccordionContent>
+          </AccordionItem>
         </Accordion>
       </CardContent>
     </Card>
