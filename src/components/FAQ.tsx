@@ -111,6 +111,16 @@ const FAQ: React.FC = () => {
               e estamos sempre dispostos a ajudar com suas dúvidas.
             </AccordionContent>
           </AccordionItem>
+          
+          <AccordionItem value="item-12">
+            <AccordionTrigger>Posso saber se a pessoa leu ou respondeu minha mensagem?</AccordionTrigger>
+            <AccordionContent>
+              Não, nosso serviço apenas entrega a mensagem. Não temos como saber se o 
+              destinatário visualizou, leu ou respondeu à mensagem enviada. O serviço 
+              funciona como um envio único e anônimo, sem retorno de informações sobre 
+              o status da mensagem após a entrega.
+            </AccordionContent>
+          </AccordionItem>
         </Accordion>
       </CardContent>
     </Card>
