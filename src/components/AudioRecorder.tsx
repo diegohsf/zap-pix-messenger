@@ -69,12 +69,12 @@ const AudioRecorder: React.FC<AudioRecorderProps> = ({
   return (
     <Button
       variant="outline"
-      className="w-full h-20 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 hover:from-orange-100 hover:to-orange-150 transition-all duration-200"
+      className="w-full h-24 flex flex-col items-center justify-center gap-2 glass-card border-orange-300 hover:border-orange-500 hover:bg-orange-50 border-2 border-dashed transition-all duration-300 group"
       onClick={handleStartRecording}
       type="button"
     >
-      <Mic className="h-6 w-6 text-orange-600" />
-      <span className="text-xs text-gray-700 font-medium">Gravar Áudio</span>
+      <Mic className="h-7 w-7 text-orange-600 group-hover:scale-110 transition-transform" />
+      <span className="text-sm font-medium text-gray-700">Gravar Áudio</span>
       {promotionPrice || <span className="text-xs text-orange-600 font-semibold">+ R$ 2,00</span>}
     </Button>
   );
