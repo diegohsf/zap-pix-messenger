@@ -123,7 +123,8 @@
 
   body {
     @apply bg-background text-foreground;
-    background: var(--gradient-background);
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 25%, #e2e8f0 50%, #f8fafc 75%, #ffffff 100%);
+    background-attachment: fixed;
     min-height: 100vh;
   }
 }
