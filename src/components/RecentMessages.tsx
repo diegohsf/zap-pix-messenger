@@ -135,10 +135,6 @@ const RecentMessages: React.FC = () => {
                         {mediaTag.text}
                       </span>
                     )}
-                    <div className="flex items-center gap-1 text-gray-500">
-                      <Clock className="h-3 w-3" />
-                      <span>{formatDate(message.sent_at)}</span>
-                    </div>
                   </div>
                 </div>
               );
