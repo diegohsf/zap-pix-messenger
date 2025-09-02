@@ -57,20 +57,39 @@ const BlogManagement: React.FC = () => {
   });
 
   const generateSlug = (title: string) => {
-    return title
+    const baseSlug = title
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '') // Remove acentos
       .replace(/[^a-z0-9\s-]/g, '') // Remove caracteres especiais
       .replace(/\s+/g, '-') // Substitui espaços por hífens
       .replace(/-+/g, '-') // Remove hífens duplos
+      .replace(/^-+|-+$/g, '') // Remove hífens do início e fim
       .trim();
+    
+    // Adiciona timestamp para garantir unicidade
+    const timestamp = Date.now();
+    return `${baseSlug}-${timestamp}`;
   };
 
   const createPostMutation = useMutation({
     mutationFn: async (postData: PostFormData) => {
+      console.log('Criando post com dados:', postData);
+      
+      if (!postData.title.trim() || !postData.content.trim()) {
+        throw new Error('Título e conteúdo são obrigatórios');
+      }
+      
       const slug = generateSlug(postData.title);
-      const postWithSlug = { ...postData, slug };
+      const postWithSlug = { 
+        ...postData, 
+        slug,
+        // Garantir que campos opcionais não sejam undefined
+        excerpt: postData.excerpt || null,
+        image_url: postData.image_url || null
+      };
+      
+      console.log('Post com slug:', postWithSlug);
       
       const { data, error } = await supabase
         .from('blog_posts')
@@ -78,7 +97,10 @@ const BlogManagement: React.FC = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro do Supabase:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -87,9 +109,10 @@ const BlogManagement: React.FC = () => {
       setIsCreateModalOpen(false);
       resetForm();
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Erro ao criar post:', error);
-      toast.error('Erro ao criar post');
+      const errorMessage = error?.message || 'Erro desconhecido ao criar post';
+      toast.error(`Erro ao criar post: ${errorMessage}`);
     },
   });
 
