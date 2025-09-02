@@ -25,6 +25,12 @@ const Footer: React.FC = () => {
           <div>
             <h4 className="text-md font-semibold mb-4">Links Úteis</h4>
             <div className="space-y-2">
+              <Link to="/blog">
+                <Button variant="link" className="text-gray-400 hover:text-white p-0 h-auto">
+                  Blog
+                </Button>
+              </Link>
+              <br />
               <Link to="/privacidade">
                 <Button variant="link" className="text-gray-400 hover:text-white p-0 h-auto">
                   Política de Privacidade

@@ -12,6 +12,7 @@ import { LogOut, DollarSign, Clock, CheckCircle, ExternalLink, Zap, Settings, Ca
 import { useToast } from '@/hooks/use-toast';
 import { usePromotionSettings } from '@/hooks/usePromotionSettings';
 import CouponManagement from './CouponManagement';
+import BlogManagement from './BlogManagement';
 
 interface AdminDashboardProps {
   onLogout: () => void;
@@ -30,7 +31,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   const [dateFilter, setDateFilter] = useState<DateFilter>('today');
   const { toast } = useToast();
   const { settings: promotionSettings, isLoading: promotionLoading, updateSettings } = usePromotionSettings();
-  const [activeTab, setActiveTab] = useState<'messages' | 'coupons'>('messages');
+  const [activeTab, setActiveTab] = useState<'messages' | 'coupons' | 'blog'>('messages');
 
   const getDateRange = (filter: DateFilter) => {
     const now = new Date();
@@ -238,6 +239,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
           >
             Cupons de Desconto
           </Button>
+          <Button
+            variant={activeTab === 'blog' ? 'default' : 'outline'}
+            onClick={() => setActiveTab('blog')}
+          >
+            Blog
+          </Button>
         </div>
 
         {activeTab === 'messages' && (
@@ -424,6 +431,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
         )}
 
         {activeTab === 'coupons' && <CouponManagement />}
+        
+        {activeTab === 'blog' && <BlogManagement />}
       </div>
     </div>
   );

@@ -10,6 +10,8 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
 
 const queryClient = new QueryClient();
 
@@ -24,6 +26,8 @@ const App = () => (
           <Route path="/confirmacao/:transactionId" element={<ConfirmationPage />} />
           <Route path="/confirmation/:transactionId" element={<ConfirmationPage />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
           <Route path="/privacidade" element={<PrivacyPolicy />} />
           <Route path="/termos" element={<TermsOfService />} />
           <Route path="*" element={<NotFound />} />
