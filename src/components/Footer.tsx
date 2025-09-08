@@ -6,9 +6,9 @@ import { Instagram, MessageCircle, Heart } from 'lucide-react';
 
 const Footer: React.FC = () => {
   return (
-    <footer className="relative mt-auto w-full overflow-hidden">
-      {/* Gradient Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-card via-muted to-background"></div>
+    <footer className="relative mt-auto w-full overflow-hidden bg-muted/50 border-t border-border">
+      {/* Subtle overlay for depth */}
+      <div className="absolute inset-0 bg-gradient-to-t from-muted/20 to-transparent"></div>
       
       {/* Content */}
       <div className="relative z-10 px-4 py-12 sm:py-16">
