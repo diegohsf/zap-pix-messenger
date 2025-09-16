@@ -292,8 +292,25 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
       const scheduledDateTime = new Date(scheduledDate);
       scheduledDateTime.setHours(hours, minutes, 0, 0);
 
-      // Verificar se a data/hora é no futuro (com margem de 5 minutos)
       const now = new Date();
+      
+      // Verificar se é hoje e se o horário já passou
+      const isToday = scheduledDate.toDateString() === now.toDateString();
+      if (isToday) {
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
+        
+        if (hours < currentHour || (hours === currentHour && minutes <= currentMinute + 5)) {
+          toast({
+            title: "Horário inválido",
+            description: `Este horário já passou. Selecione um horário após ${String(currentHour).padStart(2, '0')}:${String(currentMinute + 5).padStart(2, '0')}.`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+      
+      // Verificar se a data/hora é no futuro (com margem de 5 minutos)
       const minScheduleTime = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutos no futuro
       
       if (scheduledDateTime <= minScheduleTime) {
@@ -737,8 +754,26 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                         onChange={(e) => setScheduledTime(e.target.value)}
                         className="pl-10"
                         placeholder="Selecione o horário"
+                        min={(() => {
+                          if (!scheduledDate) return undefined;
+                          const now = new Date();
+                          const isToday = scheduledDate.toDateString() === now.toDateString();
+                          if (isToday) {
+                            const minHour = now.getHours();
+                            const minMinute = now.getMinutes() + 5;
+                            const adjustedHour = minMinute >= 60 ? minHour + 1 : minHour;
+                            const adjustedMinute = minMinute >= 60 ? minMinute - 60 : minMinute;
+                            return `${String(adjustedHour).padStart(2, '0')}:${String(adjustedMinute).padStart(2, '0')}`;
+                          }
+                          return undefined;
+                        })()}
                       />
                     </div>
+                    {scheduledDate && scheduledDate.toDateString() === new Date().toDateString() && (
+                      <p className="text-xs text-orange-600">
+                        ⏰ Para hoje, selecione um horário após {String(new Date().getHours()).padStart(2, '0')}:{String(new Date().getMinutes() + 5).padStart(2, '0')}
+                      </p>
+                    )}
                   </div>
 
                   {scheduledDate && scheduledTime && (
