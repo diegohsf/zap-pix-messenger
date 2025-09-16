@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import MessageForm, { MessageData } from '@/components/MessageForm';
 import PaymentModal from '@/components/PaymentModal';
 import Footer from '@/components/Footer';
-import SEOHead from '@/components/SEOHead';
+import SimpleSEO from '@/components/SimpleSEO';
 import CookieConsent from '@/components/CookieConsent';
 import Analytics from '@/components/Analytics';
 import { saveMessage } from '@/services/messageService';
@@ -117,7 +117,7 @@ const Index: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col relative">
-      <SEOHead />
+      <SimpleSEO />
       <Analytics />
       
       {/* Hero Section Background */}
