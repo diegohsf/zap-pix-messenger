@@ -18,6 +18,10 @@ import FAQ from './FAQ';
 import RecentMessages from './RecentMessages';
 import PromotionBanner from './PromotionBanner';
 import TrustIndicators from './TrustIndicators';
+import SuccessCounter from './SuccessCounter';
+import SecurityBadges from './SecurityBadges';
+import TestimonialCarousel from './TestimonialCarousel';
+import ProcessSteps from './ProcessSteps';
 import { usePromotionSettings } from '@/hooks/usePromotionSettings';
 import { useCouponValidation } from '@/hooks/useCouponValidation';
 
@@ -426,12 +430,13 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
           </p>
           
           {/* Success Counter */}
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 max-w-md mx-auto">
-            <div className="flex items-center justify-center gap-2 text-green-700">
-              <MessageSquare className="h-5 w-5" />
-              <span className="font-semibold">+12.847 mensagens enviadas com sucesso</span>
-            </div>
-          </div>
+          <SuccessCounter />
+          
+          {/* Security Badges */}
+          <SecurityBadges />
+          
+          {/* Process Steps */}
+          <ProcessSteps />
 
           {/* Simple Process Steps */}
           <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-600 mb-4">
@@ -903,6 +908,9 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
         </Card>
 
         <FAQ />
+        
+        {/* Testimonials */}
+        <TestimonialCarousel />
         
         <div className="mt-8">
           <RecentMessages />

@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import MessageForm, { MessageData } from '@/components/MessageForm';
 import PaymentModal from '@/components/PaymentModal';
 import Footer from '@/components/Footer';
+import SEOHead from '@/components/SEOHead';
+import CookieConsent from '@/components/CookieConsent';
+import Analytics from '@/components/Analytics';
 import { saveMessage } from '@/services/messageService';
 import { uploadFile } from '@/services/fileUploadService';
 import { useToast } from '@/hooks/use-toast';
@@ -114,6 +117,9 @@ const Index: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col relative">
+      <SEOHead />
+      <Analytics />
+      
       {/* Hero Section Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-blue-50 via-white to-green-50 -z-10 pointer-events-none"></div>
       
@@ -130,6 +136,7 @@ const Index: React.FC = () => {
         />
       </div>
       <Footer />
+      <CookieConsent />
       <PaymentModal
         isOpen={showPaymentModal}
         messageId={currentMessageId}
