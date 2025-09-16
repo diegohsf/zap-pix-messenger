@@ -83,15 +83,30 @@ serve(async (req) => {
       const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
       // Update message status in database
+      let updateData: any = {
+        status: 'paid',
+        transaction_id: charge.transactionID || `OPENPIX_${charge.globalID}`,
+        openpix_charge_id: charge.globalID,
+        paid_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // Se a mensagem era agendada, manter o agendamento mas marcar como paga
+      const { data: currentMessage } = await supabase
+        .from('messages')
+        .select('is_scheduled, scheduled_for')
+        .eq('id', messageId)
+        .single();
+
+      if (currentMessage?.is_scheduled) {
+        // Para mensagens agendadas pagas, manter o status como 'scheduled' mas marcar como paga
+        updateData.status = 'scheduled';
+        console.log('Message is scheduled, keeping scheduled status but marking as paid');
+      }
+
       const { data: updatedMessage, error } = await supabase
         .from('messages')
-        .update({
-          status: 'paid',
-          transaction_id: charge.transactionID || `OPENPIX_${charge.globalID}`,
-          openpix_charge_id: charge.globalID,
-          paid_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', messageId)
         .select()
         .single()

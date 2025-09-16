@@ -79,7 +79,14 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
         console.log('Checking payment status for message:', messageId);
         const message = await getMessageById(messageId);
         
-        if (message && message.status === 'paid' && message.transaction_id) {
+        // Para mensagens normais: status 'paid'
+        // Para mensagens agendadas: status 'scheduled' + paid_at preenchido
+        const isPaid = message && (
+          (message.status === 'paid' && message.transaction_id) ||
+          (message.status === 'scheduled' && message.paid_at && message.transaction_id)
+        );
+        
+        if (isPaid) {
           console.log('Payment confirmed, redirecting...', message.transaction_id);
           
           // Disparar evento de compra no GA4
@@ -100,8 +107,12 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             });
           }
           
+          const confirmationMessage = message.status === 'scheduled' 
+            ? "Pagamento confirmado! Sua mensagem foi agendada com sucesso."
+            : "Pagamento confirmado!";
+            
           toast({
-            title: "Pagamento confirmado!",
+            title: confirmationMessage,
             description: "Redirecionando para a página de confirmação...",
           });
 
