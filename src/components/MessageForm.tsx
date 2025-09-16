@@ -17,11 +17,6 @@ import AudioPlayer from './AudioPlayer';
 import FAQ from './FAQ';
 import RecentMessages from './RecentMessages';
 import PromotionBanner from './PromotionBanner';
-import TrustIndicators from './TrustIndicators';
-import SuccessCounter from './SuccessCounter';
-import SecurityBadges from './SecurityBadges';
-import TestimonialCarousel from './TestimonialCarousel';
-import ProcessSteps from './ProcessSteps';
 import { usePromotionSettings } from '@/hooks/usePromotionSettings';
 import { useCouponValidation } from '@/hooks/useCouponValidation';
 
@@ -419,53 +414,31 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
 
   return (
     <div className="min-h-screen">
-      {/* Optimized Hero Section for Lower Bounce Rate */}
-      <section className="py-12 px-4 text-center">
+      {/* Hero Section */}
+      <section className="py-16 px-4 text-center">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
-            WhatsApp Anônimo em <span className="bg-gradient-to-r from-green-500 to-green-600 bg-clip-text text-transparent">2 Minutos</span>
-          </h1>
-          <p className="text-xl text-gray-600 mb-6 max-w-2xl mx-auto">
-            Envie mensagens, fotos, áudios e vídeos sem revelar sua identidade
-          </p>
-          
-          {/* Success Counter */}
-          <SuccessCounter />
-          
-          {/* Security Badges */}
-          <SecurityBadges />
-          
-          {/* Process Steps */}
-          <ProcessSteps />
-
-          {/* Simple Process Steps */}
-          <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-600 mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-bold">1</div>
-              <span>Escreva sua mensagem</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-bold">2</div>
-              <span>Pague via PIX</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 bg-green-100 text-green-700 rounded-full flex items-center justify-center text-xs font-bold">3</div>
-              <span>Mensagem enviada!</span>
+          <div className="flex items-center justify-center mb-6">
+            <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-2xl shadow-lg animate-float">
+              <MessageSquare className="h-12 w-12 text-white" />
             </div>
           </div>
-          
-          {/* Trust Indicators */}
+          <h1 className="text-6xl font-bold text-gray-900 mb-4">
+            Zap <span className="bg-gradient-to-r from-green-500 to-green-600 bg-clip-text text-transparent">Elegante</span>
+          </h1>
+          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+            Envie mensagens no WhatsApp de forma anônima e elegante. Rápido, seguro e sem complicações.
+          </p>
           <div className="flex items-center justify-center gap-6 text-gray-500 text-sm">
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-500" />
+              <CheckCircle className="h-5 w-5 text-green-500" />
               <span>100% Anônimo</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-500" />
+              <CheckCircle className="h-5 w-5 text-green-500" />
               <span>Entrega Garantida</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-500" />
+              <CheckCircle className="h-5 w-5 text-green-500" />
               <span>Suporte a Mídia</span>
             </div>
           </div>
@@ -483,28 +456,32 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
         />
 
         <Card className="bg-white shadow-2xl border-0 mb-8 overflow-hidden rounded-2xl">
-          <CardHeader className="text-center pb-4 bg-gradient-to-r from-green-50 to-blue-50">
-            <CardTitle className="text-xl font-bold text-gray-900 flex items-center justify-center gap-2">
-              <Phone className="h-5 w-5 text-green-600" />
-              Complete os campos abaixo
+          <CardHeader className="text-center pb-6 bg-gradient-to-r from-green-50 to-blue-50">
+            <CardTitle className="text-2xl font-bold text-gray-900 flex items-center justify-center gap-3">
+              <Phone className="h-6 w-6 text-green-600" />
+              Envie sua mensagem agora
             </CardTitle>
+            <p className="text-gray-600 mt-2">Preencha os campos abaixo para enviar sua mensagem</p>
           </CardHeader>
 
           <CardContent className="space-y-8 p-8">
+            <Alert className="border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl">
+              <AlertDescription className="text-amber-800 font-medium">
+                <strong>⚠️ Atenção:</strong> Se você digitar o número de telefone errado, a 
+                mensagem <strong>não será entregue</strong> e <strong>não haverá reembolso</strong>.
+              </AlertDescription>
+            </Alert>
 
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-bold">1</div>
-                <label className="text-sm font-semibold text-gray-900">
-                  📱 Número do WhatsApp (destinatário) *
-                </label>
-              </div>
+              <label className="text-sm font-semibold text-gray-900">
+                📱 Número do WhatsApp
+              </label>
               <p className="text-sm text-gray-600">
-                Digite apenas números - formato automático (inclua sempre o DDD)
+                Sempre inclua o <strong>DDD</strong> do número antes de enviar a mensagem.
               </p>
               <div className="relative group">
                 <Input
-                  placeholder="Ex: (11) 99999-9999"
+                  placeholder="(11) 99999-9999"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(formatPhoneNumber(e.target.value))}
                   className="pl-12 text-lg h-14 bg-gray-50 border-gray-200 focus:border-green-500 focus:ring-green-200 transition-all duration-300 rounded-xl"
@@ -516,28 +493,24 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
             </div>
 
             <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-blue-100 text-blue-700 rounded-full flex items-center justify-center text-xs font-bold">2</div>
-                <label className="text-sm font-semibold text-gray-900">💬 Sua mensagem *</label>
-                <span className="text-xs text-gray-400">({message.length}/1000)</span>
-              </div>
+              <label className="text-sm font-semibold text-gray-900">💬 Sua mensagem</label>
               <Textarea
-                placeholder="Digite sua mensagem aqui... Ex: 'Olá! Gostaria de fazer uma pergunta sobre seu produto.'"
+                placeholder="Digite sua mensagem..."
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 className="min-h-32 text-base bg-gray-50 border-gray-200 focus:border-green-500 focus:ring-green-200 transition-all duration-300 resize-none rounded-xl"
                 maxLength={1000}
                 disabled={isSubmitting}
               />
+              <div className="text-xs text-gray-500 text-right">
+                <span className={message.length > 800 ? 'text-amber-500' : ''}>{message.length}</span>/1000 caracteres
+              </div>
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center text-xs font-bold">3</div>
-                <label className="text-sm font-semibold text-gray-900">
-                  📎 Anexar mídia <span className="text-xs text-gray-400 font-normal">(opcional)</span>
-                </label>
-              </div>
+              <label className="text-sm font-semibold text-gray-900">
+                📎 Anexos (opcional)
+              </label>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <div className="relative">
@@ -888,29 +861,10 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
             >
               {getButtonText()}
             </Button>
-            
-            {/* Trust indicators */}
-            <div className="mt-4 flex flex-wrap justify-center gap-4 text-xs text-gray-500">
-              <div className="flex items-center gap-1">
-                <CheckCircle className="h-3 w-3 text-green-600" />
-                <span>Pagamento Seguro</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <CheckCircle className="h-3 w-3 text-blue-600" />
-                <span>100% Anônimo</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <CheckCircle className="h-3 w-3 text-orange-600" />
-                <span>Entrega Instantânea</span>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
         <FAQ />
-        
-        {/* Testimonials */}
-        <TestimonialCarousel />
         
         <div className="mt-8">
           <RecentMessages />
