@@ -1,15 +1,29 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import MessageForm, { MessageData } from '@/components/MessageForm';
 import PaymentModal from '@/components/PaymentModal';
 import Footer from '@/components/Footer';
 import SimpleSEO from '@/components/SimpleSEO';
 import CookieConsent from '@/components/CookieConsent';
 import Analytics from '@/components/Analytics';
+import ResponsiveLayout from '@/components/ResponsiveLayout';
+import PWAInstallPrompt from '@/components/PWAInstallPrompt';
 import { saveMessage } from '@/services/messageService';
 import { uploadFile } from '@/services/fileUploadService';
 import { useToast } from '@/hooks/use-toast';
+
+interface MessageData {
+  phoneNumber: string;
+  messageText: string;
+  mediaType: 'none' | 'photo' | 'audio' | 'video';
+  mediaFile: File | null;
+  price: number;
+  originalPrice: number;
+  discountAmount?: number;
+  couponCode?: string;
+  scheduledFor?: Date;
+  isScheduled?: boolean;
+}
 
 const Index: React.FC = () => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -130,13 +144,14 @@ const Index: React.FC = () => {
       </div>
       
       <div className="flex-grow relative z-10">
-        <MessageForm 
+        <ResponsiveLayout 
           onSubmit={handleFormSubmit} 
           isSubmitting={isSubmitting}
         />
       </div>
       <Footer />
       <CookieConsent />
+      <PWAInstallPrompt />
       <PaymentModal
         isOpen={showPaymentModal}
         messageId={currentMessageId}

@@ -1,0 +1,49 @@
+{
+  "name": "WhatsApp Anônimo",
+  "short_name": "ZapAnônimo",
+  "description": "Envie mensagens WhatsApp de forma anônima e segura",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#10b981",
+  "orientation": "portrait-primary",
+  "categories": ["communication", "social"],
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Tela principal no mobile"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Enviar Mensagem",
+      "short_name": "Nova Msg",
+      "description": "Criar nova mensagem anônima",
+      "url": "/?action=new",
+      "icons": [
+        {
+          "src": "/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
