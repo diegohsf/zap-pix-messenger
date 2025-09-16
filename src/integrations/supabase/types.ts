@@ -112,6 +112,7 @@ export type Database = {
           created_at: string
           discount_amount: number | null
           id: string
+          is_scheduled: boolean | null
           media_file_name: string | null
           media_file_url: string | null
           media_type: string
@@ -122,7 +123,9 @@ export type Database = {
           phone_number: string
           pix_code: string | null
           price: number
+          processed_at: string | null
           qr_code_url: string | null
+          scheduled_for: string | null
           sent_at: string | null
           status: string
           transaction_id: string | null
@@ -133,6 +136,7 @@ export type Database = {
           created_at?: string
           discount_amount?: number | null
           id?: string
+          is_scheduled?: boolean | null
           media_file_name?: string | null
           media_file_url?: string | null
           media_type?: string
@@ -143,7 +147,9 @@ export type Database = {
           phone_number: string
           pix_code?: string | null
           price: number
+          processed_at?: string | null
           qr_code_url?: string | null
+          scheduled_for?: string | null
           sent_at?: string | null
           status?: string
           transaction_id?: string | null
@@ -154,6 +160,7 @@ export type Database = {
           created_at?: string
           discount_amount?: number | null
           id?: string
+          is_scheduled?: boolean | null
           media_file_name?: string | null
           media_file_url?: string | null
           media_type?: string
@@ -164,7 +171,9 @@ export type Database = {
           phone_number?: string
           pix_code?: string | null
           price?: number
+          processed_at?: string | null
           qr_code_url?: string | null
+          scheduled_for?: string | null
           sent_at?: string | null
           status?: string
           transaction_id?: string | null
