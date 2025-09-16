@@ -292,11 +292,14 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
       const scheduledDateTime = new Date(scheduledDate);
       scheduledDateTime.setHours(hours, minutes, 0, 0);
 
-      // Verificar se a data/hora é no futuro
-      if (scheduledDateTime <= new Date()) {
+      // Verificar se a data/hora é no futuro (com margem de 5 minutos)
+      const now = new Date();
+      const minScheduleTime = new Date(now.getTime() + 5 * 60 * 1000); // 5 minutos no futuro
+      
+      if (scheduledDateTime <= minScheduleTime) {
         toast({
-          title: "Data/hora inválida",
-          description: "Por favor, selecione uma data e horário no futuro.",
+          title: "Horário inválido",
+          description: "Por favor, selecione um horário pelo menos 5 minutos no futuro.",
           variant: "destructive",
         });
         return;
@@ -710,7 +713,13 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                           mode="single"
                           selected={scheduledDate}
                           onSelect={setScheduledDate}
-                          disabled={(date) => date < new Date()}
+                          disabled={(date) => {
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            const checkDate = new Date(date);
+                            checkDate.setHours(0, 0, 0, 0);
+                            return checkDate < today;
+                          }}
                           initialFocus
                           className="p-3 pointer-events-auto"
                         />
