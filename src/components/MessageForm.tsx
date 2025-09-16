@@ -5,7 +5,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Upload, Video, Image, Phone, MessageSquare, Mic, CheckCircle } from 'lucide-react';
+import { Upload, Video, Image, Phone, MessageSquare, Mic, CheckCircle, Calendar, Clock } from 'lucide-react';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import AudioRecorder from './AudioRecorder';
 import AudioPlayer from './AudioPlayer';
@@ -31,6 +36,8 @@ export interface MessageData {
   couponCode?: string;
   originalPrice?: number;
   discountAmount?: number;
+  scheduledFor?: Date;
+  isScheduled?: boolean;
 }
 
 const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = false }) => {
@@ -41,6 +48,9 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
   const [isRecording, setIsRecording] = useState(false);
   const [recordedAudio, setRecordedAudio] = useState<{ blob: Blob; duration: number } | null>(null);
   const [couponCode, setCouponCode] = useState('');
+  const [scheduledDate, setScheduledDate] = useState<Date | undefined>(undefined);
+  const [scheduledTime, setScheduledTime] = useState('');
+  const [isScheduled, setIsScheduled] = useState(false);
   
   // Refs para resetar os inputs de arquivo
   const photoInputRef = useRef<HTMLInputElement>(null);
@@ -237,6 +247,7 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     console.log('Tipo de mídia:', mediaType);
     console.log('Arquivo de mídia:', mediaFile);
     console.log('Áudio gravado:', recordedAudio);
+    console.log('Agendamento:', { isScheduled, scheduledDate, scheduledTime });
 
     if (!validatePhoneNumber(phoneNumber)) {
       toast({
@@ -254,6 +265,42 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
         variant: "destructive",
       });
       return;
+    }
+
+    // Validação de agendamento
+    if (isScheduled) {
+      if (!scheduledDate) {
+        toast({
+          title: "Data obrigatória",
+          description: "Por favor, selecione uma data para o agendamento.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!scheduledTime) {
+        toast({
+          title: "Horário obrigatório",
+          description: "Por favor, selecione um horário para o agendamento.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Combinar data e hora
+      const [hours, minutes] = scheduledTime.split(':').map(Number);
+      const scheduledDateTime = new Date(scheduledDate);
+      scheduledDateTime.setHours(hours, minutes, 0, 0);
+
+      // Verificar se a data/hora é no futuro
+      if (scheduledDateTime <= new Date()) {
+        toast({
+          title: "Data/hora inválida",
+          description: "Por favor, selecione uma data e horário no futuro.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     if (mediaType === 'audio') {
@@ -305,11 +352,21 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
       };
     }
 
+    // Preparar dados de agendamento
+    let scheduledFor: Date | undefined;
+    if (isScheduled && scheduledDate && scheduledTime) {
+      const [hours, minutes] = scheduledTime.split(':').map(Number);
+      scheduledFor = new Date(scheduledDate);
+      scheduledFor.setHours(hours, minutes, 0, 0);
+    }
+
     const formData: MessageData = {
       phoneNumber: formattedPhoneNumber,
       messageText: message,
       mediaType,
       mediaFile,
+      scheduledFor,
+      isScheduled,
       ...priceData
     };
 
@@ -328,6 +385,9 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
     if (isRecording) return 'Finalize a gravação primeiro';
     if (isSubmitting) {
       return mediaFile && mediaType !== 'none' ? 'Enviando arquivo...' : 'Processando...';
+    }
+    if (isScheduled) {
+      return '📅 Agendar Mensagem';
     }
     return '💬 Enviar Mensagem';
   };
@@ -606,6 +666,82 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
                 Ao enviar uma mensagem, você concorda com nossos Termos e Condições 
                 e a Política de Privacidade.
               </p>
+            </div>
+
+            {/* Seção de Agendamento */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-semibold">Agendamento (Opcional)</h3>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="schedule-message"
+                  checked={isScheduled}
+                  onChange={(e) => setIsScheduled(e.target.checked)}
+                  className="w-4 h-4 text-primary bg-white border-gray-300 rounded focus:ring-primary"
+                />
+                <label htmlFor="schedule-message" className="text-sm font-medium text-gray-700">
+                  Agendar envio da mensagem
+                </label>
+              </div>
+
+              {isScheduled && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg border">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Data</label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !scheduledDate && "text-muted-foreground"
+                          )}
+                        >
+                          <Calendar className="mr-2 h-4 w-4" />
+                          {scheduledDate ? format(scheduledDate, "dd/MM/yyyy", { locale: ptBR }) : "Selecione a data"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <CalendarComponent
+                          mode="single"
+                          selected={scheduledDate}
+                          onSelect={setScheduledDate}
+                          disabled={(date) => date < new Date()}
+                          initialFocus
+                          className="p-3 pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-gray-700">Horário</label>
+                    <div className="relative">
+                      <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        type="time"
+                        value={scheduledTime}
+                        onChange={(e) => setScheduledTime(e.target.value)}
+                        className="pl-10"
+                        placeholder="Selecione o horário"
+                      />
+                    </div>
+                  </div>
+
+                  {scheduledDate && scheduledTime && (
+                    <div className="md:col-span-2 p-3 bg-blue-50 border border-blue-200 rounded">
+                      <p className="text-sm text-blue-800">
+                        <strong>Sua mensagem será enviada em:</strong>{' '}
+                        {format(scheduledDate, "dd/MM/yyyy", { locale: ptBR })} às {scheduledTime}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Seção de Cupom de Desconto */}

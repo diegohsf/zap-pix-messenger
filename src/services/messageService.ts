@@ -10,6 +10,8 @@ export interface MessageData {
   couponCode?: string;
   originalPrice?: number;
   discountAmount?: number;
+  scheduledFor?: Date;
+  isScheduled?: boolean;
 }
 
 export interface SavedMessage {
@@ -32,10 +34,16 @@ export interface SavedMessage {
   coupon_code?: string;
   original_price?: number;
   discount_amount?: number;
+  scheduled_for?: string;
+  is_scheduled?: boolean;
+  processed_at?: string;
 }
 
 export const saveMessage = async (data: MessageData): Promise<SavedMessage> => {
   console.log('Saving message to database:', data);
+
+  // Determinar o status da mensagem baseado no agendamento
+  const status = data.isScheduled ? 'scheduled' : 'pending_payment';
 
   const { data: savedMessage, error } = await supabase
     .from('messages')
@@ -49,7 +57,9 @@ export const saveMessage = async (data: MessageData): Promise<SavedMessage> => {
       coupon_code: data.couponCode,
       original_price: data.originalPrice,
       discount_amount: data.discountAmount || 0,
-      status: 'pending_payment'
+      scheduled_for: data.scheduledFor?.toISOString(),
+      is_scheduled: data.isScheduled || false,
+      status
     })
     .select()
     .single();
@@ -113,6 +123,48 @@ export const getMessageById = async (messageId: string): Promise<SavedMessage | 
   }
 
   return message;
+};
+
+export const getScheduledMessages = async (): Promise<SavedMessage[]> => {
+  const { data: messages, error } = await supabase
+    .from('messages')
+    .select('*')
+    .eq('is_scheduled', true)
+    .eq('status', 'scheduled')
+    .order('scheduled_for', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching scheduled messages:', error);
+    throw new Error('Erro ao buscar mensagens agendadas');
+  }
+
+  return messages || [];
+};
+
+export const updateMessageStatus = async (
+  messageId: string,
+  status: 'sent' | 'failed' | 'processing',
+  additionalData?: { sent_at?: string; processed_at?: string }
+): Promise<SavedMessage> => {
+  const updateData: any = {
+    status,
+    updated_at: new Date().toISOString(),
+    ...additionalData
+  };
+
+  const { data: updatedMessage, error } = await supabase
+    .from('messages')
+    .update(updateData)
+    .eq('id', messageId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating message status:', error);
+    throw new Error('Erro ao atualizar status da mensagem');
+  }
+
+  return updatedMessage;
 };
 
 export const getMessageByTransactionId = async (transactionId: string): Promise<SavedMessage | null> => {
