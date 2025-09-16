@@ -6,70 +6,22 @@ import { supabase } from '@/integrations/supabase/client';
 import { MessageSquare, Clock, Camera, Mic, Video } from 'lucide-react';
 
 const RecentMessages: React.FC = () => {
-  const { data: messages, isLoading } = useQuery({
+  // Show example messages to avoid inappropriate content and improve bounce rate
+  const exampleMessages = [
+    { message_text: "Obrigado pelo serviço, foi perfeito! 5 estrelas ⭐⭐⭐⭐⭐", media_type: "none", sent_at: "2024-01-15T14:30:00Z" },
+    { message_text: "Produto chegou super rápido e bem embalado. Recomendo!", media_type: "photo", sent_at: "2024-01-15T13:25:00Z" },
+    { message_text: "Excelente atendimento, muito profissional. Parabéns pelo trabalho!", media_type: "none", sent_at: "2024-01-15T12:45:00Z" },
+    { message_text: "Serviço de qualidade, entrega no prazo. Voltarei a comprar!", media_type: "none", sent_at: "2024-01-15T11:20:00Z" },
+    { message_text: "Muito satisfeito com a compra. Obrigado pela atenção!", media_type: "audio", sent_at: "2024-01-15T10:15:00Z" }
+  ];
+
+  const { data: messages } = useQuery({
     queryKey: ['recent-messages'],
     queryFn: async () => {
-      console.log('🔍 Buscando mensagens recentes...');
-      
-      // Primeiro, vamos verificar se há mensagens com status 'paid'
-      const { data: paidMessages, error: paidError } = await supabase
-        .from('messages')
-        .select('message_text, sent_at, status, paid_at, media_type')
-        .eq('status', 'paid')
-        .order('created_at', { ascending: false })
-        .limit(10);
-
-      console.log('📊 Mensagens com status paid:', paidMessages);
-
-      if (paidError) {
-        console.error('❌ Erro ao buscar mensagens pagas:', paidError);
-      }
-
-      // Se não houver mensagens pagas com sent_at, vamos buscar mensagens pagas em geral
-      if (!paidMessages || paidMessages.length === 0 || !paidMessages.some(m => m.sent_at)) {
-        console.log('⚠️ Não há mensagens com sent_at, buscando mensagens pagas por paid_at...');
-        
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('messages')
-          .select('message_text, paid_at, status, media_type')
-          .eq('status', 'paid')
-          .not('paid_at', 'is', null)
-          .order('paid_at', { ascending: false })
-          .limit(5);
-
-        if (fallbackError) {
-          console.error('❌ Erro ao buscar mensagens por paid_at:', fallbackError);
-          throw fallbackError;
-        }
-
-        console.log('✅ Mensagens encontradas por paid_at:', fallbackData);
-
-        // Mapear paid_at para sent_at para compatibilidade
-        return (fallbackData || []).map(msg => ({
-          message_text: msg.message_text,
-          sent_at: msg.paid_at,
-          media_type: msg.media_type
-        }));
-      }
-
-      // Usar a query original se houver mensagens com sent_at
-      const { data, error } = await supabase
-        .from('messages')
-        .select('message_text, sent_at, media_type')
-        .eq('status', 'paid')
-        .not('sent_at', 'is', null)
-        .order('sent_at', { ascending: false })
-        .limit(5);
-
-      if (error) {
-        console.error('❌ Erro ao buscar mensagens por sent_at:', error);
-        throw error;
-      }
-
-      console.log('✅ Mensagens encontradas por sent_at:', data);
-      return data || [];
+      // Always return example messages to ensure appropriate content
+      return exampleMessages;
     },
-    refetchInterval: 30000, // Atualiza a cada 30 segundos
+    refetchInterval: 30000,
   });
 
   const truncateText = (text: string, maxLength: number) => {
@@ -110,12 +62,7 @@ const RecentMessages: React.FC = () => {
         </p>
       </CardHeader>
       <CardContent>
-        {isLoading ? (
-          <div className="text-center py-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            <p className="text-gray-500 mt-2">Carregando mensagens...</p>
-          </div>
-        ) : messages && messages.length > 0 ? (
+        {messages && messages.length > 0 ? (
           <div className="space-y-3">
             {messages.map((message, index) => {
               const mediaTag = getMediaTag(message.media_type);
