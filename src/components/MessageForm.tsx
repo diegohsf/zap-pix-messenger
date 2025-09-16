@@ -486,12 +486,6 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
           </CardHeader>
 
           <CardContent className="space-y-8 p-8">
-            <Alert className="border-blue-300 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl">
-              <AlertDescription className="text-blue-800 font-medium">
-                <strong>💡 Dica:</strong> Verifique se digitou o número corretamente. 
-                Número errado = mensagem não entregue + sem reembolso.
-              </AlertDescription>
-            </Alert>
 
             <div className="space-y-3">
               <div className="flex items-center gap-2">
