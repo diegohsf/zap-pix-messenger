@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
-import { Calendar, User, ArrowLeft } from 'lucide-react';
+import { Calendar, User, ArrowLeft, BookOpen, PenTool } from 'lucide-react';
 import Footer from '@/components/Footer';
 
 const Blog: React.FC = () => {
@@ -33,22 +33,60 @@ const Blog: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <Link to="/">
-            <Button variant="outline" className="mb-4">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Voltar ao Início
-            </Button>
-          </Link>
-          <h1 className="text-4xl font-bold text-gray-800 mb-2">Blog</h1>
-          <p className="text-gray-600 text-lg">
-            Fique por dentro das novidades e dicas sobre mensagens anônimas
-          </p>
+      {/* Beautiful Header */}
+      <div className="relative">
+        {/* Background decoration */}
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/50 via-purple-50/30 to-blue-50/50 -z-10"></div>
+        
+        <div className="relative bg-gradient-to-r from-indigo-600 via-purple-500 to-blue-600 text-white overflow-hidden">
+          <div className="absolute inset-0 bg-black/10"></div>
+          <div className="absolute top-0 right-0 w-48 h-48 md:w-96 md:h-96 bg-white/10 rounded-full -translate-y-24 translate-x-24 md:-translate-y-48 md:translate-x-48"></div>
+          <div className="absolute bottom-0 left-0 w-32 h-32 md:w-64 md:h-64 bg-white/5 rounded-full translate-y-16 -translate-x-16 md:translate-y-32 md:-translate-x-32"></div>
+          
+          <div className="container mx-auto px-4 py-8 md:py-16 relative z-10">
+            {/* Back Button */}
+            <div className="mb-6 md:mb-8">
+              <Link to="/">
+                <Button variant="outline" className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Voltar ao Início
+                </Button>
+              </Link>
+            </div>
+            
+            {/* Header Content */}
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-4 md:mb-6">
+                <div className="bg-white/20 p-3 md:p-4 rounded-xl md:rounded-2xl backdrop-blur-sm">
+                  <BookOpen className="h-8 w-8 md:h-12 md:w-12 text-white" />
+                </div>
+              </div>
+              
+              <h1 className="text-3xl md:text-5xl font-bold mb-3 md:mb-4">
+                Blog do Zap Elegante
+              </h1>
+              
+              <p className="text-white/90 text-base md:text-xl max-w-3xl mx-auto px-4 leading-relaxed">
+                Fique por dentro das novidades, dicas e histórias sobre mensagens anônimas
+              </p>
+              
+              {/* Decorative Elements */}
+              <div className="flex items-center justify-center gap-6 md:gap-8 mt-6 md:mt-8 text-white/70">
+                <div className="flex items-center gap-2">
+                  <PenTool className="h-4 w-4 md:h-5 md:w-5" />
+                  <span className="text-sm md:text-base">Artigos Exclusivos</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 md:h-5 md:w-5" />
+                  <span className="text-sm md:text-base">Sempre Atualizado</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
 
-        {/* Posts Grid */}
+      <div className="container mx-auto px-4 py-8 md:py-12">
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
