@@ -465,12 +465,6 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
           </CardHeader>
 
           <CardContent className="space-y-8 p-8">
-            <Alert className="border-amber-300 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl">
-              <AlertDescription className="text-amber-800 font-medium">
-                <strong>⚠️ Atenção:</strong> Se você digitar o número de telefone errado, a 
-                mensagem <strong>não será entregue</strong> e <strong>não haverá reembolso</strong>.
-              </AlertDescription>
-            </Alert>
 
             <div className="space-y-3">
               <label className="text-sm font-semibold text-gray-900">
