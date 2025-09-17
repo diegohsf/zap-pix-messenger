@@ -415,17 +415,17 @@ const MessageForm: React.FC<MessageFormProps> = ({ onSubmit, isSubmitting = fals
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="py-16 px-4 text-center">
+      <section className="py-8 px-4 text-center">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-center mb-6">
-            <div className="bg-gradient-to-r from-green-500 to-green-600 p-4 rounded-2xl shadow-lg animate-float">
-              <MessageSquare className="h-12 w-12 text-white" />
+          <div className="flex items-center justify-center mb-4">
+            <div className="bg-gradient-to-r from-green-500 to-green-600 p-3 rounded-2xl shadow-lg animate-float">
+              <MessageSquare className="h-10 w-10 text-white" />
             </div>
           </div>
-          <h1 className="text-6xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl font-bold text-gray-900 mb-3">
             Zap <span className="bg-gradient-to-r from-green-500 to-green-600 bg-clip-text text-transparent">Elegante</span>
           </h1>
-          <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-lg text-gray-600 mb-6 max-w-2xl mx-auto leading-relaxed">
             Envie mensagens no WhatsApp de forma anônima e elegante. Rápido, seguro e sem complicações.
           </p>
           <div className="flex items-center justify-center gap-6 text-gray-500 text-sm">
