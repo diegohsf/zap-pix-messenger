@@ -84,51 +84,51 @@ const FAQ: React.FC = () => {
   return (
     <div className="relative">
       {/* Background decoration */}
-      <div className="absolute inset-0 bg-gradient-to-br from-green-50/50 via-blue-50/30 to-purple-50/50 rounded-3xl -z-10"></div>
+      <div className="absolute inset-0 bg-gradient-to-br from-green-50/50 via-blue-50/30 to-purple-50/50 rounded-2xl md:rounded-3xl -z-10"></div>
       
-      <Card className="shadow-2xl border-0 bg-white/90 backdrop-blur-lg rounded-3xl overflow-hidden">
-        {/* Beautiful Header */}
+      <Card className="shadow-xl md:shadow-2xl border-0 bg-white/90 backdrop-blur-lg rounded-2xl md:rounded-3xl overflow-hidden">
+        {/* Beautiful Header - Mobile Optimized */}
         <div className="relative bg-gradient-to-r from-green-600 via-green-500 to-blue-600 text-white overflow-hidden">
           <div className="absolute inset-0 bg-black/10"></div>
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -translate-y-48 translate-x-48"></div>
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/5 rounded-full translate-y-32 -translate-x-32"></div>
+          <div className="absolute top-0 right-0 w-48 h-48 md:w-96 md:h-96 bg-white/10 rounded-full -translate-y-24 translate-x-24 md:-translate-y-48 md:translate-x-48"></div>
+          <div className="absolute bottom-0 left-0 w-32 h-32 md:w-64 md:h-64 bg-white/5 rounded-full translate-y-16 -translate-x-16 md:translate-y-32 md:-translate-x-32"></div>
           
-          <CardHeader className="text-center py-12 relative z-10">
-            <div className="flex items-center justify-center mb-4">
-              <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-sm">
-                <HelpCircle className="h-10 w-10 text-white" />
+          <CardHeader className="text-center py-6 md:py-12 px-4 relative z-10">
+            <div className="flex items-center justify-center mb-3 md:mb-4">
+              <div className="bg-white/20 p-2 md:p-4 rounded-xl md:rounded-2xl backdrop-blur-sm">
+                <HelpCircle className="h-6 w-6 md:h-10 md:w-10 text-white" />
               </div>
             </div>
-            <CardTitle className="text-4xl font-bold mb-2">
+            <CardTitle className="text-2xl md:text-4xl font-bold mb-2">
               Perguntas Frequentes
             </CardTitle>
-            <p className="text-white/90 text-lg max-w-2xl mx-auto">
+            <p className="text-white/90 text-sm md:text-lg max-w-2xl mx-auto px-4">
               Tire todas as suas dúvidas sobre nosso serviço de mensagens anônimas
             </p>
           </CardHeader>
         </div>
 
-        <CardContent className="p-8">
-          <Accordion type="single" collapsible className="w-full space-y-4">
+        <CardContent className="p-4 md:p-8">
+          <Accordion type="single" collapsible className="w-full space-y-3 md:space-y-4">
             {faqItems.map((item, index) => (
               <AccordionItem 
                 key={`item-${index + 1}`} 
                 value={`item-${index + 1}`}
-                className="bg-gradient-to-r from-gray-50 to-gray-100/50 rounded-2xl border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-[1.02] overflow-hidden"
+                className="bg-gradient-to-r from-gray-50 to-gray-100/50 rounded-xl md:rounded-2xl border-0 shadow-md md:shadow-lg hover:shadow-lg md:hover:shadow-xl transition-all duration-300 hover:scale-[1.01] md:hover:scale-[1.02] overflow-hidden"
               >
-                <AccordionTrigger className="px-6 py-5 text-left hover:no-underline group">
-                  <div className="flex items-center gap-4 w-full">
-                    <div className="bg-gradient-to-r from-green-500 to-blue-500 p-3 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform duration-300">
-                      <item.icon className="h-5 w-5" />
+                <AccordionTrigger className="px-4 md:px-6 py-4 md:py-5 text-left hover:no-underline group">
+                  <div className="flex items-center gap-3 md:gap-4 w-full">
+                    <div className="bg-gradient-to-r from-green-500 to-blue-500 p-2 md:p-3 rounded-lg md:rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform duration-300 flex-shrink-0">
+                      <item.icon className="h-4 w-4 md:h-5 md:w-5" />
                     </div>
-                    <span className="text-lg font-semibold text-gray-800 group-hover:text-green-600 transition-colors duration-300">
+                    <span className="text-base md:text-lg font-semibold text-gray-800 group-hover:text-green-600 transition-colors duration-300 text-left leading-tight">
                       {item.question}
                     </span>
                   </div>
                 </AccordionTrigger>
-                <AccordionContent className="px-6 pb-6 pt-2">
-                  <div className="bg-white/60 rounded-xl p-6 backdrop-blur-sm border border-gray-200/50">
-                    <p className="text-gray-700 leading-relaxed text-base">
+                <AccordionContent className="px-4 md:px-6 pb-4 md:pb-6 pt-2">
+                  <div className="bg-white/60 rounded-lg md:rounded-xl p-4 md:p-6 backdrop-blur-sm border border-gray-200/50 ml-10 md:ml-0">
+                    <p className="text-gray-700 leading-relaxed text-sm md:text-base">
                       {item.answer}
                     </p>
                   </div>
