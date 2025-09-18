@@ -7,42 +7,39 @@ import { MessageSquare, Clock, Camera, Mic, Video, TrendingUp } from 'lucide-rea
 
 const RecentMessages: React.FC = () => {
   const { data: messages, isLoading } = useQuery({
-    queryKey: ['recent-messages'],
+    queryKey: ['random-messages', Date.now()], // Adiciona timestamp para forçar refetch a cada reload
     queryFn: async () => {
-      console.log('🔍 Buscando mensagens recentes...');
+      console.log('🔍 Buscando mensagens aleatórias...');
       
-      // Primeiro, vamos verificar se há mensagens com status 'paid'
-      const { data: paidMessages, error: paidError } = await supabase
+      // Buscar mensagens aleatórias que foram enviadas
+      let { data: randomMessages, error } = await supabase
         .from('messages')
-        .select('message_text, sent_at, status, paid_at, media_type')
+        .select('message_text, sent_at, media_type')
         .eq('status', 'paid')
-        .order('created_at', { ascending: false })
-        .limit(10);
+        .not('sent_at', 'is', null)
+        .order('random()' as any)
+        .limit(5);
 
-      console.log('📊 Mensagens com status paid:', paidMessages);
+      console.log('📊 Mensagens aleatórias com sent_at:', randomMessages);
 
-      if (paidError) {
-        console.error('❌ Erro ao buscar mensagens pagas:', paidError);
-      }
-
-      // Se não houver mensagens pagas com sent_at, vamos buscar mensagens pagas em geral
-      if (!paidMessages || paidMessages.length === 0 || !paidMessages.some(m => m.sent_at)) {
-        console.log('⚠️ Não há mensagens com sent_at, buscando mensagens pagas por paid_at...');
+      // Se não houver mensagens com sent_at, buscar mensagens pagas aleatórias
+      if (!randomMessages || randomMessages.length === 0) {
+        console.log('⚠️ Não há mensagens com sent_at, buscando mensagens pagas aleatórias por paid_at...');
         
         const { data: fallbackData, error: fallbackError } = await supabase
           .from('messages')
-          .select('message_text, paid_at, status, media_type')
+          .select('message_text, paid_at, media_type')
           .eq('status', 'paid')
           .not('paid_at', 'is', null)
-          .order('paid_at', { ascending: false })
+          .order('random()' as any)
           .limit(5);
 
         if (fallbackError) {
-          console.error('❌ Erro ao buscar mensagens por paid_at:', fallbackError);
+          console.error('❌ Erro ao buscar mensagens aleatórias por paid_at:', fallbackError);
           throw fallbackError;
         }
 
-        console.log('✅ Mensagens encontradas por paid_at:', fallbackData);
+        console.log('✅ Mensagens aleatórias encontradas por paid_at:', fallbackData);
 
         // Mapear paid_at para sent_at para compatibilidade
         return (fallbackData || []).map(msg => ({
@@ -52,24 +49,14 @@ const RecentMessages: React.FC = () => {
         }));
       }
 
-      // Usar a query original se houver mensagens com sent_at
-      const { data, error } = await supabase
-        .from('messages')
-        .select('message_text, sent_at, media_type')
-        .eq('status', 'paid')
-        .not('sent_at', 'is', null)
-        .order('sent_at', { ascending: false })
-        .limit(5);
-
       if (error) {
-        console.error('❌ Erro ao buscar mensagens por sent_at:', error);
+        console.error('❌ Erro ao buscar mensagens aleatórias:', error);
         throw error;
       }
 
-      console.log('✅ Mensagens encontradas por sent_at:', data);
-      return data || [];
+      console.log('✅ Mensagens aleatórias encontradas:', randomMessages);
+      return randomMessages || [];
     },
-    refetchInterval: 30000, // Atualiza a cada 30 segundos
   });
 
   const truncateText = (text: string, maxLength: number) => {
@@ -120,7 +107,7 @@ const RecentMessages: React.FC = () => {
               🔥 Envios Mais Quentes
             </CardTitle>
             <p className="text-white/90 text-sm md:text-lg max-w-2xl mx-auto px-4">
-              Últimas mensagens enviadas com sucesso
+              Mensagens enviadas com sucesso selecionadas aleatoriamente
             </p>
           </CardHeader>
         </div>
