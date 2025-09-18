@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import MessageForm, { MessageData } from '@/components/MessageForm';
 import PaymentModal from '@/components/PaymentModal';
 import Footer from '@/components/Footer';
+import CheatingBanner from '@/components/CheatingBanner';
 import { saveMessage } from '@/services/messageService';
 import { uploadFile } from '@/services/fileUploadService';
 import { useToast } from '@/hooks/use-toast';
@@ -124,6 +125,9 @@ const Index: React.FC = () => {
       </div>
       
       <div className="flex-grow relative z-10">
+        <div className="container mx-auto px-4 pt-8">
+          <CheatingBanner />
+        </div>
         <MessageForm 
           onSubmit={handleFormSubmit} 
           isSubmitting={isSubmitting}
