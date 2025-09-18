@@ -7,60 +7,68 @@ import { MessageSquare, Clock, Camera, Mic, Video, TrendingUp } from 'lucide-rea
 
 const RecentMessages: React.FC = () => {
   const { data: messages, isLoading } = useQuery({
-    queryKey: ['random-messages', Date.now()], // Adiciona timestamp para forçar refetch a cada reload
+    queryKey: ['random-messages', Date.now()],
     queryFn: async () => {
-      console.log('🔍 Buscando mensagens para randomizar...');
+      console.log('🔍 Verificando mensagens no banco...');
       
-      // Buscar mensagens que foram enviadas
-      let { data: allMessages, error } = await supabase
+      // Primeiro, vamos ver se há mensagens no banco de dados
+      const { data: allMessagesCount, error: countError } = await supabase
         .from('messages')
-        .select('message_text, sent_at, media_type')
+        .select('id', { count: 'exact', head: true });
+
+      console.log('📊 Total de mensagens no banco:', allMessagesCount);
+
+      // Buscar qualquer mensagem paga, independente de sent_at
+      let { data: paidMessages, error } = await supabase
+        .from('messages')
+        .select('message_text, sent_at, paid_at, status, media_type')
         .eq('status', 'paid')
-        .not('sent_at', 'is', null)
-        .limit(50); // Buscar mais mensagens para ter variedade na randomização
+        .limit(20);
 
-      console.log('📊 Mensagens encontradas com sent_at:', allMessages);
-
-      // Se não houver mensagens com sent_at, buscar mensagens pagas por paid_at
-      if (!allMessages || allMessages.length === 0) {
-        console.log('⚠️ Não há mensagens com sent_at, buscando mensagens pagas por paid_at...');
-        
-        const { data: fallbackData, error: fallbackError } = await supabase
-          .from('messages')
-          .select('message_text, paid_at, media_type')
-          .eq('status', 'paid')
-          .not('paid_at', 'is', null)
-          .limit(50);
-
-        if (fallbackError) {
-          console.error('❌ Erro ao buscar mensagens por paid_at:', fallbackError);
-          throw fallbackError;
-        }
-
-        console.log('✅ Mensagens encontradas por paid_at:', fallbackData);
-
-        // Mapear paid_at para sent_at para compatibilidade e randomizar
-        const mappedMessages = (fallbackData || []).map(msg => ({
-          message_text: msg.message_text,
-          sent_at: msg.paid_at,
-          media_type: msg.media_type
-        }));
-
-        // Randomizar e retornar apenas 5
-        const shuffled = mappedMessages.sort(() => 0.5 - Math.random());
-        return shuffled.slice(0, 5);
-      }
+      console.log('💰 Mensagens com status paid:', paidMessages);
 
       if (error) {
-        console.error('❌ Erro ao buscar mensagens:', error);
+        console.error('❌ Erro ao buscar mensagens pagas:', error);
         throw error;
       }
 
-      console.log('✅ Mensagens encontradas, randomizando...');
-      
-      // Randomizar as mensagens no cliente e retornar apenas 5
-      const shuffled = (allMessages || []).sort(() => 0.5 - Math.random());
-      return shuffled.slice(0, 5);
+      // Se não há mensagens pagas, buscar qualquer mensagem
+      if (!paidMessages || paidMessages.length === 0) {
+        console.log('⚠️ Sem mensagens pagas, buscando todas as mensagens...');
+        
+        const { data: anyMessages, error: anyError } = await supabase
+          .from('messages')
+          .select('message_text, sent_at, paid_at, status, media_type')
+          .limit(20);
+
+        if (anyError) {
+          console.error('❌ Erro ao buscar qualquer mensagem:', anyError);
+          throw anyError;
+        }
+
+        console.log('📝 Todas as mensagens encontradas:', anyMessages);
+        
+        // Se há mensagens mas nenhuma paga, usar as que existem
+        if (anyMessages && anyMessages.length > 0) {
+          const shuffled = anyMessages.sort(() => 0.5 - Math.random());
+          return shuffled.slice(0, 5).map(msg => ({
+            message_text: msg.message_text,
+            sent_at: msg.sent_at || msg.paid_at || new Date().toISOString(),
+            media_type: msg.media_type || 'none'
+          }));
+        }
+        
+        return [];
+      }
+
+      // Usar mensagens pagas e randomizar
+      console.log('✅ Usando mensagens pagas, randomizando...');
+      const shuffled = paidMessages.sort(() => 0.5 - Math.random());
+      return shuffled.slice(0, 5).map(msg => ({
+        message_text: msg.message_text,
+        sent_at: msg.sent_at || msg.paid_at,
+        media_type: msg.media_type || 'none'
+      }));
     },
   });
 
