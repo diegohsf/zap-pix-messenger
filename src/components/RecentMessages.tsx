@@ -9,53 +9,58 @@ const RecentMessages: React.FC = () => {
   const { data: messages, isLoading } = useQuery({
     queryKey: ['random-messages', Date.now()], // Adiciona timestamp para forçar refetch a cada reload
     queryFn: async () => {
-      console.log('🔍 Buscando mensagens aleatórias...');
+      console.log('🔍 Buscando mensagens para randomizar...');
       
-      // Buscar mensagens aleatórias que foram enviadas
-      let { data: randomMessages, error } = await supabase
+      // Buscar mensagens que foram enviadas
+      let { data: allMessages, error } = await supabase
         .from('messages')
         .select('message_text, sent_at, media_type')
         .eq('status', 'paid')
         .not('sent_at', 'is', null)
-        .order('random()' as any)
-        .limit(5);
+        .limit(50); // Buscar mais mensagens para ter variedade na randomização
 
-      console.log('📊 Mensagens aleatórias com sent_at:', randomMessages);
+      console.log('📊 Mensagens encontradas com sent_at:', allMessages);
 
-      // Se não houver mensagens com sent_at, buscar mensagens pagas aleatórias
-      if (!randomMessages || randomMessages.length === 0) {
-        console.log('⚠️ Não há mensagens com sent_at, buscando mensagens pagas aleatórias por paid_at...');
+      // Se não houver mensagens com sent_at, buscar mensagens pagas por paid_at
+      if (!allMessages || allMessages.length === 0) {
+        console.log('⚠️ Não há mensagens com sent_at, buscando mensagens pagas por paid_at...');
         
         const { data: fallbackData, error: fallbackError } = await supabase
           .from('messages')
           .select('message_text, paid_at, media_type')
           .eq('status', 'paid')
           .not('paid_at', 'is', null)
-          .order('random()' as any)
-          .limit(5);
+          .limit(50);
 
         if (fallbackError) {
-          console.error('❌ Erro ao buscar mensagens aleatórias por paid_at:', fallbackError);
+          console.error('❌ Erro ao buscar mensagens por paid_at:', fallbackError);
           throw fallbackError;
         }
 
-        console.log('✅ Mensagens aleatórias encontradas por paid_at:', fallbackData);
+        console.log('✅ Mensagens encontradas por paid_at:', fallbackData);
 
-        // Mapear paid_at para sent_at para compatibilidade
-        return (fallbackData || []).map(msg => ({
+        // Mapear paid_at para sent_at para compatibilidade e randomizar
+        const mappedMessages = (fallbackData || []).map(msg => ({
           message_text: msg.message_text,
           sent_at: msg.paid_at,
           media_type: msg.media_type
         }));
+
+        // Randomizar e retornar apenas 5
+        const shuffled = mappedMessages.sort(() => 0.5 - Math.random());
+        return shuffled.slice(0, 5);
       }
 
       if (error) {
-        console.error('❌ Erro ao buscar mensagens aleatórias:', error);
+        console.error('❌ Erro ao buscar mensagens:', error);
         throw error;
       }
 
-      console.log('✅ Mensagens aleatórias encontradas:', randomMessages);
-      return randomMessages || [];
+      console.log('✅ Mensagens encontradas, randomizando...');
+      
+      // Randomizar as mensagens no cliente e retornar apenas 5
+      const shuffled = (allMessages || []).sort(() => 0.5 - Math.random());
+      return shuffled.slice(0, 5);
     },
   });
 
