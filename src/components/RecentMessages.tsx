@@ -7,69 +7,57 @@ import { MessageSquare, Clock, Camera, Mic, Video, TrendingUp } from 'lucide-rea
 
 const RecentMessages: React.FC = () => {
   const { data: messages, isLoading } = useQuery({
-    queryKey: ['random-messages', Date.now()],
+    queryKey: ['random-messages'],
     queryFn: async () => {
-      console.log('🔍 Verificando mensagens no banco...');
+      console.log('🔍 Buscando mensagens para exibir...');
       
-      // Primeiro, vamos ver se há mensagens no banco de dados
-      const { data: allMessagesCount, error: countError } = await supabase
-        .from('messages')
-        .select('id', { count: 'exact', head: true });
-
-      console.log('📊 Total de mensagens no banco:', allMessagesCount);
-
-      // Buscar qualquer mensagem paga, independente de sent_at
-      let { data: paidMessages, error } = await supabase
+      // Buscar mensagens pagas primeiro
+      const { data: paidMessages, error } = await supabase
         .from('messages')
         .select('message_text, sent_at, paid_at, status, media_type')
         .eq('status', 'paid')
-        .limit(20);
-
-      console.log('💰 Mensagens com status paid:', paidMessages);
+        .not('message_text', 'is', null)
+        .limit(50);
 
       if (error) {
-        console.error('❌ Erro ao buscar mensagens pagas:', error);
+        console.error('❌ Erro ao buscar mensagens:', error);
         throw error;
       }
 
-      // Se não há mensagens pagas, buscar qualquer mensagem
-      if (!paidMessages || paidMessages.length === 0) {
-        console.log('⚠️ Sem mensagens pagas, buscando todas as mensagens...');
-        
-        const { data: anyMessages, error: anyError } = await supabase
+      console.log('💰 Encontradas', paidMessages?.length || 0, 'mensagens pagas');
+
+      let messagesToShow = paidMessages || [];
+
+      // Se não há mensagens pagas suficientes, buscar outras
+      if (!messagesToShow || messagesToShow.length < 5) {
+        const { data: otherMessages } = await supabase
           .from('messages')
           .select('message_text, sent_at, paid_at, status, media_type')
-          .limit(20);
+          .not('message_text', 'is', null)
+          .limit(50);
 
-        if (anyError) {
-          console.error('❌ Erro ao buscar qualquer mensagem:', anyError);
-          throw anyError;
-        }
+        messagesToShow = [...(messagesToShow || []), ...(otherMessages || [])];
+      }
 
-        console.log('📝 Todas as mensagens encontradas:', anyMessages);
-        
-        // Se há mensagens mas nenhuma paga, usar as que existem
-        if (anyMessages && anyMessages.length > 0) {
-          const shuffled = anyMessages.sort(() => 0.5 - Math.random());
-          return shuffled.slice(0, 5).map(msg => ({
-            message_text: msg.message_text,
-            sent_at: msg.sent_at || msg.paid_at || new Date().toISOString(),
-            media_type: msg.media_type || 'none'
-          }));
-        }
-        
+      if (!messagesToShow || messagesToShow.length === 0) {
+        console.log('❌ Nenhuma mensagem encontrada');
         return [];
       }
 
-      // Usar mensagens pagas e randomizar
-      console.log('✅ Usando mensagens pagas, randomizando...');
-      const shuffled = paidMessages.sort(() => 0.5 - Math.random());
-      return shuffled.slice(0, 5).map(msg => ({
+      // Randomizar e pegar 5 mensagens
+      const shuffled = [...messagesToShow]
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 5);
+
+      console.log('✅ Retornando', shuffled.length, 'mensagens aleatórias');
+
+      return shuffled.map(msg => ({
         message_text: msg.message_text,
-        sent_at: msg.sent_at || msg.paid_at,
+        sent_at: msg.sent_at || msg.paid_at || new Date().toISOString(),
         media_type: msg.media_type || 'none'
       }));
     },
+    refetchInterval: 30000, // Atualizar a cada 30 segundos
   });
 
   const truncateText = (text: string, maxLength: number) => {

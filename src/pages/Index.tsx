@@ -125,13 +125,13 @@ const Index: React.FC = () => {
       </div>
       
       <div className="flex-grow relative z-10">
-        <div className="container mx-auto px-4 pt-8">
-          <CheatingBanner />
-        </div>
         <MessageForm 
           onSubmit={handleFormSubmit} 
           isSubmitting={isSubmitting}
         />
+      </div>
+      <div className="container mx-auto px-4 pb-8">
+        <CheatingBanner />
       </div>
       <Footer />
       <PaymentModal
